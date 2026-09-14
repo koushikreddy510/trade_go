@@ -64,7 +64,10 @@ PAPER/LIVE wiring (Flattrade market data + brokers), `live_orders` safety gate, 
 
 Recommended first VM test: **PAPER** (live candles, paper fills). Enable LIVE only with `live_orders: true` after stable PAPER.
 
-Still optional later: WebSocket fill updates, richer reporting UI, DynamoDB if you keep AWS Lambda for auth.
+### Phase 6 — Reporting ✅
+Deterministic simulation performance report (`-report`) with realized/unrealized PnL, win rate, open/closed counts, and per-strategy aggregates.
+
+Still optional later: WebSocket fill updates, a browser reporting UI, DynamoDB if you keep AWS Lambda for auth.
 
 ## Deployment model
 

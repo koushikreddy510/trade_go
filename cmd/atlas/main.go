@@ -3,12 +3,14 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/koushik-bangaru/atlas/internal/app"
 	"github.com/koushik-bangaru/atlas/internal/config"
@@ -23,6 +25,7 @@ func main() {
 	runOnce := flag.Bool("once", false, "run a single snapshot workflow then exit")
 	runReplay := flag.Bool("replay", false, "bar-by-bar forward replay then exit")
 	runServe := flag.Bool("serve", false, "start scheduler candle jobs (blocks until SIGINT)")
+	reportOnly := flag.Bool("report", false, "run a simulation replay and print its JSON performance report")
 	tokenJob := flag.Bool("token-job", false, "run daily session-token job once then exit (cron/EventBridge style)")
 	useSynthetic := flag.Bool("synthetic", false, "force synthetic bars even if fixture exists")
 	exchangeToken := flag.String("exchange-token", "", "OAuth request_code: exchange for jKey and store in Redis")
@@ -89,6 +92,15 @@ func main() {
 	}()
 
 	switch {
+	case *reportOnly:
+		if cfg.Execution.Mode != config.ModeSimulation {
+			log.Error("report requires SIMULATION mode", "mode", cfg.Execution.Mode)
+			os.Exit(1)
+		}
+		if err := runReportMode(ctx, application); err != nil {
+			log.Error("report failed", "error", err)
+			os.Exit(1)
+		}
 	case *tokenJob:
 		if err := application.RunSessionTokenJob(ctx); err != nil {
 			log.Error("session token job failed", "error", err)
@@ -139,6 +151,13 @@ func runReplayMode(ctx context.Context, log *logging.Logger, application *app.Ap
 		"closed_trades", summary.ClosedTrades,
 	)
 	return nil
+}
+
+func runReportMode(ctx context.Context, application *app.App) error {
+	if _, err := application.RunReplay(ctx); err != nil {
+		return err
+	}
+	return json.NewEncoder(os.Stdout).Encode(application.Report(time.Now()))
 }
 
 func runServeMode(ctx context.Context, log *logging.Logger, application *app.App) error {

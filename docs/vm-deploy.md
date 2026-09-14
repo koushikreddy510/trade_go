@@ -198,7 +198,7 @@ sudo ufw enable
 4. Restart Atlas.
 5. Monitor logs and Flattrade order book closely.
 
-There is no separate `live_orders` flag yet — `execution.mode: LIVE` is the switch. Treat any future order-enable flags with the same caution.
+`execution.mode: LIVE` additionally requires `execution.live_orders: true`; Atlas refuses to start LIVE mode without that explicit safety gate.
 
 ## Operations
 

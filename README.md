@@ -9,6 +9,7 @@ cp .env.example .env
 make dev-up          # Redis 7 in Docker, data volume atlas-redis-data
 make dev-replay      # SIMULATION bar walk; trades stored in Redis
 make dev-once        # single snapshot workflow against Redis
+go run ./cmd/atlas -report  # replay + JSON performance report
 ```
 
 Wipe local Redis data: `make docker-reset`

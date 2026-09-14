@@ -19,6 +19,7 @@ import (
 	"github.com/koushik-bangaru/atlas/internal/instruments"
 	"github.com/koushik-bangaru/atlas/internal/logging"
 	"github.com/koushik-bangaru/atlas/internal/market"
+	"github.com/koushik-bangaru/atlas/internal/report"
 	"github.com/koushik-bangaru/atlas/internal/repository"
 	"github.com/koushik-bangaru/atlas/internal/scheduler"
 	"github.com/koushik-bangaru/atlas/internal/sessionjob"
@@ -56,18 +57,18 @@ type ReplaySummary struct {
 
 // App is the wired Atlas runtime.
 type App struct {
-	cfg        *config.Config
-	log        *logging.Logger
-	opts       Options
+	cfg  *config.Config
+	log  *logging.Logger
+	opts Options
 
-	bus        events.Bus
-	marketSvc  *market.Service
-	provider   market.Provider
+	bus       events.Bus
+	marketSvc *market.Service
+	provider  market.Provider
 
-	strat      strategy.Strategy
-	indEng     *indicator.Engine
-	mgr        *trade.Manager
-	redis      *redis.Client
+	strat  strategy.Strategy
+	indEng *indicator.Engine
+	mgr    *trade.Manager
+	redis  *redis.Client
 
 	ftClient   *flattrade.Client
 	sessionMgr *flattrade.SessionManager
@@ -82,7 +83,7 @@ type App struct {
 	lookback   int
 	warmup     int
 
-	sched      *scheduler.Scheduler
+	sched *scheduler.Scheduler
 }
 
 // New builds and wires an App from configuration.
@@ -359,6 +360,11 @@ func (a *App) RunOnce(ctx context.Context) error {
 		return fmt.Errorf("app: run once: %w", err)
 	}
 	return nil
+}
+
+// Report returns a point-in-time summary of the in-memory trade ledger.
+func (a *App) Report(now time.Time) report.Summary {
+	return report.Build(a.mgr.ListTrades(), now)
 }
 
 // RunServe starts scheduler candle jobs that call RunOnce; blocks until ctx is cancelled.

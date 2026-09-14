@@ -3,6 +3,7 @@ package trade
 import (
 	"context"
 	"fmt"
+	"sort"
 	"sync"
 	"time"
 
@@ -350,6 +351,25 @@ func (m *Manager) GetByStrategy(strategyID string) []domain.Trade {
 			out = append(out, *cloneTrade(trade))
 		}
 	}
+	return out
+}
+
+// ListTrades returns copies of every trade, ordered by entry time and then ID.
+// It is intended for reporting and must not be used to mutate manager state.
+func (m *Manager) ListTrades() []domain.Trade {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]domain.Trade, 0, len(m.trades))
+	for _, t := range m.trades {
+		out = append(out, *cloneTrade(t))
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].Position.EntryTime.Equal(out[j].Position.EntryTime) {
+			return out[i].TradeID < out[j].TradeID
+		}
+		return out[i].Position.EntryTime.Before(out[j].Position.EntryTime)
+	})
 	return out
 }
 
