@@ -1,0 +1,64 @@
+# Local development — SIMULATION with Redis persistence (Docker Redis).
+# Start Redis: make dev-up
+# Run:       make dev-replay  |  make once
+version: "1"
+
+server:
+  http_addr: ":8080"
+
+redis:
+  addr: "${REDIS_ADDR:-localhost:6379}"
+  db: 0
+
+flattrade:
+  base_url: "https://piconnect.flattrade.in/PiConnectAPI"
+  client_id: "${FLATTRADE_CLIENT_ID:-}"
+  api_key: "${FLATTRADE_API_KEY:-}"
+  api_secret: "${FLATTRADE_API_SECRET:-}"
+  redirect_url: "http://127.0.0.1:8080/callback"
+
+session_token_job:
+  enabled: false
+  mode: check
+  hour_ist: 8
+  minute_ist: 15
+  listen_port: 8080
+  listen_timeout_min: 20
+
+execution:
+  mode: SIMULATION
+  live_orders: false
+
+simulation:
+  fixture_path: "test/testdata/candles_silver_1h.json"
+  symbol_token: "26000"
+  exchange: "MCX"
+  synthetic_bars: 120
+
+symbols:
+  - SILVER
+
+timeframes:
+  - 1h
+  - 2h
+  - 4h
+
+strategies:
+  dual_supertrend_ema:
+    enabled: true
+    symbol: SILVERM
+    entry_timeframe: 1h
+    filter_timeframe: 2h
+    regime_timeframe: 4h
+    supertrend_lower:
+      period: 7
+      multiplier: 2.0
+    supertrend_higher:
+      period: 7
+      multiplier: 3.0
+    ema:
+      period: 10
+
+logging:
+  level: info
+  format: json

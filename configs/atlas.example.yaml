@@ -1,0 +1,78 @@
+# Atlas platform configuration (example)
+version: "1"
+
+# 8080/tcp — health + OAuth callback only; do not expose Redis publicly.
+server:
+  http_addr: ":8080"
+
+redis:
+  addr: "${REDIS_ADDR:-localhost:6379}"
+  db: 0
+
+# Flattrade Pi API v2 — token exchange requires a registered static IP.
+# API key + api_secret: created ONCE in Flattrade Wall (not daily).
+# jKey (session token): exchanged ~once per trading day via browser OAuth; cleared 5–6 AM IST.
+# Stored in Redis atlas:broker:flattrade:token. See docs/flattrade-api.md.
+# Leave credentials empty for SIMULATION with fixtures.
+flattrade:
+  base_url: "https://piconnect.flattrade.in/PiConnectAPI"
+  client_id: "${FLATTRADE_CLIENT_ID:-}"
+  api_key: "${FLATTRADE_API_KEY:-}"
+  api_secret: "${FLATTRADE_API_SECRET:-}"
+  redirect_url: ""  # e.g. http://VM_PUBLIC_IP:8080/callback for -listen-auth on Oracle VM
+
+# Daily jKey job (like EventBridge → Lambda → DynamoDB, but Redis + Atlas scheduler/cron).
+# Flattrade still needs a browser login for request_code; this job schedules/automates the rest.
+session_token_job:
+  enabled: true
+  mode: check              # check | listen | file
+  hour_ist: 8              # fire at 08:15 IST before MCX
+  minute_ist: 15
+  listen_port: 8080
+  listen_timeout_min: 20
+  request_code_file: ""    # for mode=file — path written by external automation
+
+execution:
+  mode: SIMULATION  # SIMULATION | PAPER | LIVE
+  live_orders: false  # LIVE only: set true to place real Flattrade orders (safety gate)
+
+simulation:
+  fixture_path: "test/testdata/candles_silver_1h.json"
+  symbol_token: "26000"       # used in SIMULATION / when resolve_futures=false
+  exchange: "MCX"
+  synthetic_bars: 120
+  # For PAPER/LIVE on VM, prefer resolve_futures (see configs/atlas.paper.yaml):
+  # resolve_futures: true
+  # search_text: SILVERMIC
+  # futures_root: SILVERMIC
+  # month_policy: fixed       # or smart
+  # month_offset: 2           # current + 2 months
+
+symbols:
+  - SILVER
+
+# 1h entry, 2h filter, 4h regime (4h derived from lower TF — TPSeries max intrv is 120)
+timeframes:
+  - 1h
+  - 2h
+  - 4h
+
+strategies:
+  dual_supertrend_ema:
+    enabled: true
+    symbol: SILVERM
+    entry_timeframe: 1h      # tighter supertrend — entry / early trend
+    filter_timeframe: 2h     # wider supertrend — alignment filter
+    regime_timeframe: 4h     # higher-TF regime context
+    supertrend_lower:
+      period: 7
+      multiplier: 2.0
+    supertrend_higher:
+      period: 7
+      multiplier: 3.0
+    ema:
+      period: 10             # bias / trail reference on entry TF
+
+logging:
+  level: info
+  format: json

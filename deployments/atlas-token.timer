@@ -1,0 +1,9 @@
+[Unit]
+Description=Daily Atlas Flattrade session token refresh (08:15 IST)
+
+[Timer]
+OnCalendar=*-*-* 08:15:00 Asia/Kolkata
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,46 @@
+# Local development stack.
+# Redis persists trades/tokens in a Docker volume (redis-data).
+#
+#   make dev-up          # Redis only (host runs atlas)
+#   make docker-up       # Redis + one-shot atlas -replay
+#   make docker-down     # stop + keep volume
+#   make docker-reset    # stop + wipe Redis volume
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes", "--save", "60", "1"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  atlas:
+    profiles: ["full"]
+    build:
+      context: ..
+      dockerfile: deployments/Dockerfile
+    depends_on:
+      redis:
+        condition: service_healthy
+    env_file:
+      - ../.env
+    environment:
+      REDIS_ADDR: redis:6379
+      ATLAS_CONFIG: /app/configs/atlas.dev.yaml
+    ports:
+      - "8080:8080"
+    volumes:
+      - ../configs:/app/configs:ro
+      - ../test/testdata:/app/test/testdata:ro
+    command: ["-config", "/app/configs/atlas.dev.yaml", "-replay", "-synthetic"]
+    restart: "no"
+
+volumes:
+  redis-data:
+    name: atlas-redis-data

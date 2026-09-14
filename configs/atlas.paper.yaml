@@ -1,0 +1,71 @@
+# Atlas PAPER mode — forward-test on a VM with live Flattrade market data and paper fills.
+# Requires daily jKey in Redis (session_token_job) before market open.
+version: "1"
+
+server:
+  http_addr: ":8080"
+
+redis:
+  addr: "${REDIS_ADDR:-localhost:6379}"
+  db: 0
+
+flattrade:
+  base_url: "https://piconnect.flattrade.in/PiConnectAPI"
+  client_id: "${FLATTRADE_CLIENT_ID}"
+  api_key: "${FLATTRADE_API_KEY}"
+  api_secret: "${FLATTRADE_API_SECRET}"
+  redirect_url: "http://137.23.33.238:8080/callback"
+
+session_token_job:
+  enabled: true
+  mode: listen
+  hour_ist: 8
+  minute_ist: 15
+  listen_port: 8080
+  listen_timeout_min: 20
+  request_code_file: ""
+
+execution:
+  mode: PAPER
+  live_orders: false
+
+# Futures contract resolution (old Lambda SearchScrip + get_next_x_fut).
+# Default: always trade current calendar month + 2 (e.g. in July → September SILVERMIC).
+simulation:
+  exchange: "MCX"
+  synthetic_bars: 0
+  resolve_futures: true
+  search_text: "SILVERMIC"
+  futures_root: "SILVERMIC"
+  month_policy: fixed          # fixed | smart
+  month_offset: 2              # fixed: always +2 months
+  near_expiry_days: 7          # smart: last N days of month → +2; day<=10 → +1
+  # symbol_token filled automatically when resolve_futures=true
+
+symbols:
+  - SILVERMIC
+
+timeframes:
+  - 1h
+  - 2h
+  - 4h
+
+strategies:
+  dual_supertrend_ema:
+    enabled: true
+    symbol: SILVERMIC          # root name; orders use full resolved tsym
+    entry_timeframe: 1h
+    filter_timeframe: 2h
+    regime_timeframe: 4h
+    supertrend_lower:
+      period: 7
+      multiplier: 2.0
+    supertrend_higher:
+      period: 7
+      multiplier: 3.0
+    ema:
+      period: 10
+
+logging:
+  level: info
+  format: json

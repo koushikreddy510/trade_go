@@ -1,0 +1,16 @@
+[Unit]
+Description=Atlas trading engine
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/atlas
+EnvironmentFile=/opt/atlas/.env
+ExecStart=/opt/atlas/bin/atlas -config /opt/atlas/configs/atlas.paper.yaml -serve
+Restart=on-failure
+RestartSec=5
+User=atlas
+
+[Install]
+WantedBy=multi-user.target
