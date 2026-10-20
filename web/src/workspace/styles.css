@@ -58,6 +58,11 @@
 .menu-anchor { position:relative; }
 .menu { position:absolute; z-index:30; top:100%; left:0; margin:4px 0 0; padding:4px 0; list-style:none; background:var(--panel2); border:1px solid var(--line); min-width:210px; box-shadow:0 8px 24px #0008; }
 .menu li { padding:6px 12px; cursor:pointer; display:flex; justify-content:space-between; gap:12px; } .menu li:hover, .menu li:focus { background:var(--hover); outline:none; } .menu small { color:var(--muted); }
+.indicator-editor { padding:10px 12px; min-width:200px; }
+.indicator-editor-title { font-weight:600; margin-bottom:8px; font-size:13px; }
+.indicator-editor-row { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:6px; font-size:12px; color:var(--muted); text-transform:capitalize; }
+.indicator-editor-row input { width:72px; background:var(--panel); border:1px solid var(--line); color:var(--text); padding:3px 6px; border-radius:3px; font-size:12px; text-align:right; }
+.indicator-editor-actions { display:flex; gap:6px; justify-content:flex-end; margin-top:10px; }
 .chart-wrap { position:relative; flex:1; min-height:240px; }
 .chart-host { position:absolute; inset:0; }
 .chart-note { position:absolute; top:12px; left:50%; transform:translateX(-50%); color:var(--muted); background:var(--panel); padding:4px 12px; border-radius:4px; pointer-events:none; }

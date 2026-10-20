@@ -62,6 +62,8 @@ export const initialState: AppState = {
   financialsLoading: false,
   indicators: [
     { id: 'ema-20', name: 'ema', params: { period: 20 } },
+    { id: 'supertrend-10-3', name: 'supertrend', params: { period: 10, multiplier: 3 } },
+    { id: 'supertrend-5-2', name: 'supertrend', params: { period: 5, multiplier: 2 } },
   ],
   showResults: true,
   showPe: false,

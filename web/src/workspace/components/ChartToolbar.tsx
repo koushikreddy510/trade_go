@@ -4,6 +4,8 @@ import { INDICATORS, indicatorLabel } from '../lib/indicators'
 import { fmtPct, fmtPrice, shortSymbol, sign } from '../lib/format'
 import { useApp, useSel } from './context'
 
+type EditingIndicator = { name: IndicatorName; params: Record<string, number> }
+
 export function ChartToolbar() {
   const { ctl } = useApp()
   const symbol = useSel((s) => s.symbol)
@@ -13,6 +15,24 @@ export function ChartToolbar() {
   const showPe = useSel((s) => s.showPe)
   const quote = useSel((s) => s.quotes[s.symbol])
   const [menu, setMenu] = useState(false)
+  const [editing, setEditing] = useState<EditingIndicator | null>(null)
+
+  function startEdit(name: IndicatorName) {
+    setMenu(false)
+    setEditing({ name, params: { ...INDICATORS[name].defaults } })
+  }
+
+  function confirmAdd() {
+    if (!editing) return
+    ctl.addIndicator(editing.name, editing.params)
+    setEditing(null)
+  }
+
+  function updateParam(key: string, raw: string) {
+    if (!editing) return
+    const val = parseFloat(raw)
+    if (!Number.isNaN(val)) setEditing({ ...editing, params: { ...editing.params, [key]: val } })
+  }
 
   return (
     <div className="chart-toolbar">
@@ -43,17 +63,43 @@ export function ChartToolbar() {
             <button aria-label={`Remove ${indicatorLabel(i.name, i.params)}`} onClick={() => ctl.removeIndicator(i.id)}>×</button>
           </span>
         ))}
+
         <span className="menu-anchor">
-          <button className="chip" aria-haspopup="menu" aria-expanded={menu} onClick={() => setMenu((m) => !m)}>+ Indicator</button>
-          {menu && (
+          <button className="chip" aria-haspopup="menu" aria-expanded={menu} onClick={() => { setEditing(null); setMenu((m) => !m) }}>+ Indicator</button>
+
+          {menu && !editing && (
             <ul className="menu" role="menu">
               {(Object.keys(INDICATORS) as IndicatorName[]).map((name) => (
-                <li key={name} role="menuitem" tabIndex={0} onClick={() => { ctl.addIndicator(name); setMenu(false) }} onKeyDown={(e) => { if (e.key === 'Enter') { ctl.addIndicator(name); setMenu(false) } }}>
+                <li key={name} role="menuitem" tabIndex={0}
+                  onClick={() => startEdit(name)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') startEdit(name) }}>
                   {INDICATORS[name].label}
                   <small>{Object.entries(INDICATORS[name].defaults).map(([k, v]) => `${k} ${v}`).join(', ')}</small>
                 </li>
               ))}
             </ul>
+          )}
+
+          {editing && (
+            <div className="menu indicator-editor" role="dialog" aria-label={`Configure ${INDICATORS[editing.name].label}`}>
+              <div className="indicator-editor-title">{INDICATORS[editing.name].label}</div>
+              {Object.entries(editing.params).map(([key, val]) => (
+                <label key={key} className="indicator-editor-row">
+                  <span>{key.replace(/_/g, ' ')}</span>
+                  <input
+                    type="number"
+                    defaultValue={val}
+                    step={key.includes('mult') || key.includes('step') ? 0.1 : 1}
+                    onChange={(e) => updateParam(key, e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') confirmAdd() }}
+                  />
+                </label>
+              ))}
+              <div className="indicator-editor-actions">
+                <button className="chip" onClick={() => setEditing(null)}>Cancel</button>
+                <button className="chip active" onClick={confirmAdd}>Add</button>
+              </div>
+            </div>
           )}
         </span>
       </div>
