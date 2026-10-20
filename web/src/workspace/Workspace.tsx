@@ -1,10 +1,10 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ApiClient } from './api/client'
 import { LiveSocket, defaultSocketUrl } from './api/socket'
 import { ChartPane } from './components/ChartPane'
 import { ChartToolbar } from './components/ChartToolbar'
 import { DrawingRail } from './components/DrawingRail'
-import { AppContext, useSel, type AppContextValue } from './components/context'
+import { AppContext, useApp, useSel, type AppContextValue } from './components/context'
 import { Dock } from './components/Dock'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { RuleDialog } from './components/RuleDialog'
@@ -24,10 +24,13 @@ import { StrategiesView } from './views/StrategiesView'
 import './styles.css'
 
 function Body() {
+  const { ctl } = useApp()
   const view = useSel((s) => s.view)
+  const chartFull = useSel((s) => s.chartFull)
+  const [wlCollapsed, setWlCollapsed] = useState(false)
   return (
     <div className="body">
-      <WatchlistPanel />
+      {!chartFull && <WatchlistPanel collapsed={wlCollapsed} onToggle={() => setWlCollapsed((v) => !v)} />}
       <main className="main">
         {view === 'chart' && (
           <>
@@ -35,8 +38,11 @@ function Body() {
             <div className="chart-area">
               <DrawingRail />
               <ErrorBoundary label="chart"><ChartPane /></ErrorBoundary>
+              <button className="chart-full-btn" title={chartFull ? 'Exit fullscreen' : 'Fullscreen chart'} onClick={() => ctl.toggleChartFull()}>
+                {chartFull ? '⤡' : '⤢'}
+              </button>
             </div>
-            <Dock />
+            {!chartFull && <Dock />}
           </>
         )}
         {view === 'screener' && <ScreenerView />}

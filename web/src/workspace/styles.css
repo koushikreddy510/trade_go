@@ -1,6 +1,9 @@
+/* Reset browser defaults so workspace fills the full viewport without white borders */
+html, body, #root { margin:0; padding:0; height:100%; overflow:hidden; background:#000; }
+
 /* Workspace theme: TradingView's black palette (pure black canvas, neutral grey lines, teal / red candles, no blue). */
 .workspace { --bg:#000; --panel:#0a0a0a; --panel2:#050505; --line:#242424; --text:#d9d9d9; --muted:#7a7a7a; --up:#26a69a; --down:#ef5350; --accent:#e8e8e8; --amber:#f7b955; --hover:#1c1c1c; --blue:#e8e8e8; --on-accent:#000;
-  display:flex; flex-direction:column; height:100vh; background:var(--bg); color:var(--text); font:13px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif; }
+  display:flex; flex-direction:column; height:100%; background:var(--bg); color:var(--text); font:13px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif; }
 .workspace * { box-sizing:border-box; }
 .workspace { accent-color:var(--accent); color-scheme:dark; }
 .workspace button { font:inherit; color:inherit; background:var(--panel); border:1px solid var(--line); border-radius:4px; padding:4px 10px; cursor:pointer; }
@@ -32,7 +35,11 @@
 
 .body { flex:1; display:flex; min-height:0; }
 .watchlist { width:250px; flex:none; border-right:1px solid var(--line); background:var(--panel); display:flex; flex-direction:column; min-height:0; }
-.wl-tabs { display:flex; flex-wrap:wrap; padding:4px 4px 0; border-bottom:1px solid var(--line); }
+.watchlist.wl-collapsed { width:28px; justify-content:flex-start; align-items:center; }
+.wl-collapse-btn { background:none !important; border:none !important; color:var(--muted); cursor:pointer; font-size:10px; padding:4px 6px; flex:none; }
+.wl-collapse-btn:hover { color:var(--text) !important; }
+.wl-collapsed .wl-collapse-btn { padding:10px 6px; width:100%; text-align:center; }
+.wl-tabs { display:flex; flex-wrap:wrap; align-items:center; padding:4px 4px 0; border-bottom:1px solid var(--line); }
 .search { position:relative; padding:6px; }
 .search input { width:100%; }
 .search-results { position:absolute; z-index:20; left:6px; right:6px; top:100%; margin:0; padding:0; list-style:none; background:var(--panel2); border:1px solid var(--line); max-height:320px; overflow:auto; box-shadow:0 8px 24px #0008; }
@@ -68,9 +75,12 @@
 .chart-note { position:absolute; top:12px; left:50%; transform:translateX(-50%); color:var(--muted); background:var(--panel); padding:4px 12px; border-radius:4px; pointer-events:none; }
 
 .dock { height:clamp(240px,36vh,400px); flex:none; display:flex; flex-direction:column; border-top:1px solid var(--line); background:var(--panel); }
-.dock-tabs { display:flex; border-bottom:1px solid var(--line); }
+.dock.dock-collapsed { height:auto; }
+.dock-tabs { display:flex; align-items:center; border-bottom:1px solid var(--line); }
 .count { margin-left:6px; background:var(--hover); border-radius:9px; padding:0 6px; font-size:11px; }
 .dock-body { flex:1; overflow:auto; }
+.dock-collapse-btn { margin-left:auto; background:none !important; border:none !important; color:var(--muted); padding:0 10px; font-size:10px; cursor:pointer; flex:none; }
+.dock-collapse-btn:hover { color:var(--text) !important; }
 .panel-head { display:flex; align-items:center; gap:14px; flex-wrap:wrap; padding:6px 10px; }
 .pnl { font-weight:700; }
 table.grid { width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums; }
@@ -124,8 +134,10 @@ table.fin tbody th { min-width:130px; }
 .strategies .links { margin-top:16px; }
 
 /* ---- chart: left tool rail + OHLC / indicator legend (TradingView layout) ---- */
-.chart-area { flex:1; display:flex; min-height:0; }
+.chart-area { flex:1; display:flex; min-height:0; position:relative; }
 .chart-area > .chart-wrap { flex:1; min-width:0; }
+.chart-full-btn { position:absolute; bottom:8px; right:8px; z-index:10; background:var(--panel) !important; border:1px solid var(--line) !important; color:var(--muted); width:26px; height:26px; padding:0; font-size:14px; border-radius:4px; opacity:.7; }
+.chart-full-btn:hover { opacity:1; color:var(--text); border-color:var(--accent) !important; }
 .rail { width:40px; flex:none; display:flex; flex-direction:column; align-items:center; gap:2px; padding:6px 0; background:var(--panel); border-right:1px solid var(--line); }
 .workspace .rail-btn { width:32px; height:32px; padding:0; border:none; border-radius:4px; background:none; color:var(--muted); font-size:17px; line-height:1; }
 .workspace .rail-btn:hover:not(:disabled) { background:var(--hover); color:var(--text); border:none; }

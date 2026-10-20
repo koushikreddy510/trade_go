@@ -38,6 +38,8 @@ export type AppState = {
   server: ServerStatus | null
   feed: string
   dock: DockTab
+  dockCollapsed: boolean
+  chartFull: boolean
   toast: Toast | null
   ruleDialog: RuleDraft | null
   booted: boolean
@@ -73,6 +75,8 @@ export const initialState: AppState = {
   server: null,
   feed: 'disconnected',
   dock: 'positions',
+  dockCollapsed: false,
+  chartFull: false,
   toast: null,
   ruleDialog: null,
   booted: false,

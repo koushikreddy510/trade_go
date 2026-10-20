@@ -3,7 +3,7 @@ import { fmtPct, fmtPrice, shortSymbol, sign } from '../lib/format'
 import { SymbolSearch } from './SymbolSearch'
 import { useApp, useSel } from './context'
 
-export function WatchlistPanel() {
+export function WatchlistPanel({ collapsed, onToggle }: { collapsed?: boolean; onToggle?: () => void }) {
   const { ctl } = useApp()
   const lists = useSel((s) => s.watchlists)
   const activeId = useSel((s) => s.activeWatchlistId)
@@ -32,6 +32,14 @@ export function WatchlistPanel() {
     setDragging(null)
   }
 
+  if (collapsed) {
+    return (
+      <aside className="watchlist wl-collapsed" aria-label="Watchlists">
+        <button className="wl-collapse-btn" title="Expand watchlist" onClick={onToggle}>▶</button>
+      </aside>
+    )
+  }
+
   return (
     <aside className="watchlist" aria-label="Watchlists">
       <div className="wl-tabs" role="tablist">
@@ -39,6 +47,7 @@ export function WatchlistPanel() {
           <button key={w.id} role="tab" aria-selected={w.id === active?.id} className={w.id === active?.id ? 'tab active' : 'tab'} onClick={() => ctl.setActiveWatchlist(w.id)}>{w.name}</button>
         ))}
         <button className="tab add" title="New watchlist" aria-label="New watchlist" onClick={newList}>+</button>
+        <button className="wl-collapse-btn" title="Collapse watchlist" onClick={onToggle}>◀</button>
       </div>
       <SymbolSearch placeholder="Add symbol…" onPick={(symbol) => void ctl.addToWatchlist(symbol)} />
       <ul className="wl-rows">

@@ -442,6 +442,9 @@ export class Controller {
     this.savePrefs()
   }
 
+  toggleDockCollapsed() { this.store.set({ dockCollapsed: !this.s.dockCollapsed }) }
+  toggleChartFull() { this.store.set({ chartFull: !this.s.chartFull }) }
+
   dispose() {
     this.socket.close()
   }
