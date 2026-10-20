@@ -3,6 +3,7 @@ package indicator
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/koushik-bangaru/atlas/internal/domain"
 	"github.com/koushik-bangaru/atlas/internal/execctx"
@@ -10,9 +11,10 @@ import (
 
 // Engine holds registered indicator instances and computes snapshots over candles.
 type Engine struct {
-	byID    map[string]Indicator
-	byKey   map[string]string
-	order   []string
+	mu    sync.Mutex
+	byID  map[string]Indicator
+	byKey map[string]string
+	order []string
 }
 
 // NewEngine creates an empty indicator engine.
@@ -69,6 +71,8 @@ func (e *Engine) IDs() []string {
 
 // ComputeAll runs each registered indicator over candles.
 func (e *Engine) ComputeAll(candles []domain.Candle) (map[string]domain.IndicatorSnapshot, error) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
 	out := make(map[string]domain.IndicatorSnapshot, len(e.byID))
 	seen := make(map[Indicator]bool, len(e.order))
 

@@ -1,0 +1,10 @@
+export type Timeframe = '1H' | '2H' | '4H'
+export type Candle = { Time: string; Open: number; High: number; Low: number; Close: number; Volume: number }
+export type Position = { TradeID: string; StrategyID: string; Side: 'BUY' | 'SELL'; Quantity: number; State: string; Position: { AvgPrice: number; Quantity: number; UnrealizedPnL: number; RealizedPnL: number }; Risk: { StopLoss: number; Target: number }; Trailing: { Enabled: boolean; StopLoss: number } }
+export type Snapshot = { symbol: { Exchange: string; Name: string; Token: string }; timeframe: Timeframe; candles: Candle[]; positions: Position[]; generated_at: string }
+export type Point = { time: number; price: number }
+export type Drawing = { id: string; kind: 'trend_line' | 'horizontal_line' | 'channel'; symbol: unknown; timeframe: Timeframe; points: Point[]; label?: string; color?: string }
+export type Quote = { exchange: string; token: string; symbol: string; last_price: number; volume?: string; updated_at: string }
+export type PnL = { realized_pnl: number; unrealized_pnl: number; net_pnl: number; open_trade_count: number; closed_trade_count: number }
+export type LiveState = { mode: string; stream: string; quote: Quote; pnl: PnL; positions: Position[]; live_orders: boolean }
+export type LiveEvent = { type: 'snapshot' | 'tick' | 'order' | 'connection'; snapshot?: LiveState; tick?: Quote }

@@ -16,6 +16,8 @@ import (
 const (
 	DefaultBaseURL = "https://piconnect.flattrade.in/PiConnectAPI"
 	DefaultAuthURL = "https://authapi.flattrade.in/trade/apitoken"
+	// DefaultWebSocketURL carries both touchline market data and order updates.
+	DefaultWebSocketURL = "wss://piconnect.flattrade.in/PiConnectWSAPI/"
 )
 
 // ErrNotConfigured is returned when a PiConnect call is made without a session token.
@@ -29,6 +31,7 @@ type Config struct {
 	APISecret    string // raw secret from Wall (not the SHA-256 hash)
 	UserID       string // uid for jData
 	SessionToken string // jKey
+	WebSocketURL string // defaults to DefaultWebSocketURL
 	HTTPClient   *http.Client
 }
 
@@ -40,6 +43,7 @@ type Client struct {
 	apiSecret    string
 	userID       string
 	sessionToken string
+	websocketURL string
 	httpClient   *http.Client
 }
 
@@ -64,8 +68,16 @@ func NewClient(cfg Config) *Client {
 		apiSecret:    cfg.APISecret,
 		userID:       cfg.UserID,
 		sessionToken: cfg.SessionToken,
+		websocketURL: defaultWebSocketURL(cfg.WebSocketURL),
 		httpClient:   hc,
 	}
+}
+
+func defaultWebSocketURL(value string) string {
+	if strings.TrimSpace(value) == "" {
+		return DefaultWebSocketURL
+	}
+	return value
 }
 
 // SetSessionToken updates jKey after ExchangeToken.

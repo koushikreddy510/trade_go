@@ -43,6 +43,7 @@ Config: `configs/atlas.example.yaml` (YAML). Redis override is optional for trad
 | [docs/vm-deploy.md](docs/vm-deploy.md) | VM deployment (Docker, systemd, Flattrade OAuth) |
 | [IMPLEMENTATION.md](IMPLEMENTATION.md) | Frozen decisions + phase plan |
 | [docs/flattrade-api.md](docs/flattrade-api.md) | Flattrade Pi API + static IP notes |
+| [docs/10-terminal-api.md](docs/10-terminal-api.md) | Paper-safe chart and drawing API |
 | [docs/](docs/) | Vision, HLD, LLD, workflow, trade manager |
 
 ## Layout

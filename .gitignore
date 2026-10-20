@@ -39,3 +39,7 @@ debug
 
 # Vendor (if used)
 vendor/
+
+# Web frontend
+web/node_modules/
+web/dist/

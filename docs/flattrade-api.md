@@ -240,9 +240,34 @@ Docs also expose `intvwap`, `intoi`; Atlas V1 uses OHLCV + OI.
 
 Key fields for Atlas: `lp` (last price), `h`, `l`, `v`, `oi`, `request_time`.
 
-### WebSocket (deferred)
+### WebSocket — real-time quotes and order events
 
-Order updates and streaming quotes use a separate WebSocket URL (documented on Pi portal). Atlas V1 stubs REST only; WS integration is Phase 5.
+Flattrade uses one authenticated WebSocket for both touchline market updates and
+order/trade updates:
+
+| Item | Value |
+|------|-------|
+| Endpoint | `wss://piconnect.flattrade.in/PiConnectWSAPI/` |
+| Authentication message | `{"t":"a","uid":"…","actid":"…","accesstoken":"<jKey>","source":"API"}` |
+| Successful authentication | `t=ck` or `t=ak`, `s=OK` |
+| Subscribe touchline | `{"t":"t","k":"MCX|token#NSE|token"}` |
+| Subscribe order updates | `{"t":"o","actid":"…"}` |
+| Heartbeat | `{"t":"h"}` |
+
+The official SDK describes an initial `tk` touchline snapshot, followed by
+sparse `tf` updates containing only changed fields. Atlas must merge each `tf`
+with its latest `tk` state; treating a delta as a full quote would erase LTP,
+volume, or instrument metadata. `om` messages are order events, including the
+broker order ID, status, report type, filled quantity, average/fill price,
+rejection details, trigger price, and broker timestamp.
+
+The `plugins/broker/flattrade.Stream` implementation provides this protocol
+layer and reconnects with capped exponential backoff. It does **not** start a
+connection automatically, place an order, or mutate an account. A subsequent
+opt-in runtime integration will use it to feed the quote cache, intraday candle
+builder, P&L marks, order reconciliation, and browser event stream.
+
+Reference: [Flattrade's official Python SDK WebSocket section](https://github.com/flattrade/pythonAPI#start_websocket).
 
 ---
 

@@ -34,6 +34,12 @@ type Server struct {
 
 // NewServer returns a health HTTP server bound to addr (e.g. ":8080").
 func NewServer(addr string, probe Probe) *Server {
+	return NewServerWithRoutes(addr, probe, nil)
+}
+
+// NewServerWithRoutes creates the health server and lets the caller mount
+// additional application routes on the same listener.
+func NewServerWithRoutes(addr string, probe Probe, register func(*http.ServeMux)) *Server {
 	if addr == "" {
 		addr = ":8080"
 	}
@@ -43,6 +49,9 @@ func NewServer(addr string, probe Probe) *Server {
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/healthz", s.handleHealthz)
+	if register != nil {
+		register(mux)
+	}
 	s.srv = &http.Server{
 		Addr:              addr,
 		Handler:           mux,

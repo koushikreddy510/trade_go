@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -25,6 +26,7 @@ import (
 	"github.com/koushik-bangaru/atlas/internal/sessionjob"
 	"github.com/koushik-bangaru/atlas/internal/simulation"
 	"github.com/koushik-bangaru/atlas/internal/strategy"
+	"github.com/koushik-bangaru/atlas/internal/terminal"
 	"github.com/koushik-bangaru/atlas/internal/trade"
 	"github.com/koushik-bangaru/atlas/internal/trailing"
 	"github.com/koushik-bangaru/atlas/internal/workflow"
@@ -65,13 +67,15 @@ type App struct {
 	marketSvc *market.Service
 	provider  market.Provider
 
-	strat  strategy.Strategy
-	indEng *indicator.Engine
-	mgr    *trade.Manager
-	redis  *redis.Client
+	strat    strategy.Strategy
+	indEng   *indicator.Engine
+	mgr      *trade.Manager
+	terminal *terminal.Service
+	redis    *redis.Client
 
 	ftClient   *flattrade.Client
 	sessionMgr *flattrade.SessionManager
+	broker     broker.Broker
 
 	wfEng      *workflow.Engine
 	fullPipe   *workflow.Pipeline
@@ -198,9 +202,11 @@ func New(ctx context.Context, cfg *config.Config, log *logging.Logger, opts Opti
 		strat:      strat,
 		indEng:     indEng,
 		mgr:        mgr,
+		terminal:   buildTerminal(marketSvc, indEng, mgr, redisClient, symbol, lookback),
 		redis:      redisClient,
 		ftClient:   ftClient,
 		sessionMgr: sessionMgr,
+		broker:     br,
 		wfEng:      workflow.NewEngine(bus),
 		fullPipe:   fullPipe,
 		replayPipe: replayPipe,
@@ -374,13 +380,18 @@ func (a *App) RunServe(ctx context.Context) error {
 		addr = ":8080"
 	}
 
-	healthSrv := health.NewServer(addr, a.healthSnapshot)
+	live := a.newLiveFeed()
+	healthSrv := health.NewServerWithRoutes(addr, a.healthSnapshot, func(mux *http.ServeMux) {
+		terminal.NewAPI(a.terminal).WithLive(live).Register(mux)
+		terminal.ServeUI(mux, os.Getenv("ATLAS_WEB_DIR"))
+	})
 	healthSrv.Start()
 	defer func() {
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		_ = healthSrv.Shutdown(shutdownCtx)
 	}()
+	go a.runFlattradeStream(ctx, live)
 
 	symbols := scheduleSymbols(a.cfg)
 	a.sched.ScheduleCandleClosures(a.timeframes, symbols)
@@ -390,6 +401,90 @@ func (a *App) RunServe(ctx context.Context) error {
 		"health_addr", addr,
 	)
 	return a.sched.Start(ctx)
+}
+
+func (a *App) newLiveFeed() *terminal.Live {
+	mode, _ := domain.ParseExecutionMode(string(a.cfg.Execution.Mode))
+	return terminal.NewLive(terminal.LiveConfig{
+		Trades:     a.mgr,
+		Broker:     a.broker,
+		Symbol:     a.symbol,
+		Mode:       mode,
+		LiveOrders: a.cfg.Execution.LiveOrders,
+	})
+}
+
+func (a *App) runFlattradeStream(ctx context.Context, live *terminal.Live) {
+	if live == nil {
+		return
+	}
+	for {
+		if ctx.Err() != nil {
+			return
+		}
+		if a.sessionMgr != nil {
+			if token := a.sessionMgr.Token(); token != "" && a.ftClient != nil {
+				a.ftClient.SetSessionToken(token)
+			}
+		}
+		if a.ftClient == nil || strings.TrimSpace(a.ftClient.SessionToken()) == "" {
+			live.OnConnection("disconnected", "waiting for Flattrade session token")
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(15 * time.Second):
+			}
+			continue
+		}
+		stream, err := flattrade.NewStream(a.ftClient, flattrade.StreamConfig{
+			AccountID:   a.cfg.Flattrade.ClientID,
+			Instruments: []flattrade.StreamInstrument{{Exchange: a.symbol.Exchange, Token: a.symbol.Token}},
+			OnTick: func(tick flattrade.Tick) {
+				live.OnTick(terminal.Quote{
+					Exchange:  tick.Exchange,
+					Token:     tick.Token,
+					Symbol:    tick.Symbol,
+					LastPrice: tick.LastPrice,
+					Volume:    tick.Raw["v"],
+					UpdatedAt: tick.UpdatedAt,
+				})
+			},
+			OnOrder: func(order flattrade.OrderUpdate) {
+				live.OnOrder(terminal.OrderEvent{
+					BrokerOrderID: order.BrokerOrderID,
+					Status:        order.Status,
+					ReportType:    order.ReportType,
+					FilledQty:     order.FilledQty,
+					AveragePrice:  order.AveragePrice,
+					ReceivedAt:    order.ReceivedAt,
+				})
+			},
+			OnConnection: func(event flattrade.ConnectionEvent) {
+				errMsg := ""
+				if event.Err != nil {
+					errMsg = event.Err.Error()
+				}
+				live.OnConnection(string(event.State), errMsg)
+			},
+			OnError: func(err error) {
+				a.log.Warn("flattrade stream error", "error", err)
+			},
+		})
+		if err != nil {
+			live.OnConnection("disconnected", err.Error())
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(15 * time.Second):
+			}
+			continue
+		}
+		a.log.Info("flattrade websocket starting", "exchange", a.symbol.Exchange, "token", a.symbol.Token)
+		_ = stream.Run(ctx)
+		if ctx.Err() != nil {
+			return
+		}
+	}
 }
 
 func (a *App) healthSnapshot(ctx context.Context) health.Snapshot {
@@ -566,6 +661,14 @@ func buildTradeManager(ctx context.Context, cfg *config.Config, log *logging.Log
 	}
 	log.Info("redis trade repository connected", "addr", cfg.Redis.Addr)
 	return mgr, client, nil
+}
+
+func buildTerminal(marketSvc *market.Service, indEng *indicator.Engine, mgr *trade.Manager, redisClient *redis.Client, symbol domain.Symbol, lookback int) *terminal.Service {
+	var drawings terminal.DrawingStore = terminal.NewMemoryDrawingStore()
+	if redisClient != nil {
+		drawings = terminal.NewRedisDrawingStore(redisClient)
+	}
+	return terminal.NewService(marketSvc, indEng, mgr, drawings, symbol, lookback)
 }
 
 func resolveSymbol(cfg *config.Config, stratCfg config.DualSupertrendEMAConfig) domain.Symbol {
