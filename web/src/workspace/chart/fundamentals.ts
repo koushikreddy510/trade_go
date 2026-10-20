@@ -36,9 +36,9 @@ export function resultMarkers(events: FinancialEvent[], candles: Candle[], tf: T
     const growth = e.profit_growth_pct
     const reaction = e.reaction_pct === null ? '' : ` · ${fmtPct(e.reaction_pct, 1)}`
     out.push({
-      id: `result:${e.date}`, time: hit.time, position: 'aboveBar', shape: 'square',
+      id: `result:${e.date}`, time: hit.time, position: 'belowBar', shape: 'circle',
       color: growth === null ? COLORS.neutral : growth >= 0 ? COLORS.up : COLORS.down,
-      text: `Result${growth === null ? '' : ` PAT ${fmtPct(growth, 0)}`}${reaction}`,
+      text: 'E',
     })
   }
   return out.sort((a, b) => a.time - b.time || a.id.localeCompare(b.id)) // lightweight-charts requires ascending order

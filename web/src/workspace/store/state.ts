@@ -6,7 +6,7 @@ import { DEFAULT_THEME, type Theme } from '../lib/theme'
 
 export type Tool = 'cursor' | 'trend_line' | 'ray' | 'horizontal_line' | 'rectangle' | 'text'
 export type View = 'chart' | 'screener' | 'strategies' | 'results' | 'sectors' | 'backtests' | 'data'
-export type DockTab = 'positions' | 'signals' | 'rules' | 'financials' | 'drawings'
+export type DockTab = 'positions' | 'signals' | 'rules' | 'financials' | 'drawings' | 'triggers'
 export type IndicatorConfig = { id: string; name: IndicatorName; params: Record<string, number> }
 /** A finished backtest being shown on the chart. focus = unix time of the trade the chart should be centred on. */
 export type BacktestOverlay = { label: string; trades: BacktestTrade[]; open: BacktestOpen[]; focus: number | null }

@@ -57,6 +57,7 @@ export class ApiClient {
   reorderWatchlist = (id: string, symbols: string[]) => this.request<Watchlist>('PUT', `/watchlists/${id}/order`, { symbols })
 
   drawings = async (symbol: string) => (await this.request<{ drawings: Drawing[] }>('GET', `/drawings${this.qs({ symbol })}`)).drawings
+  allDrawings = async () => (await this.request<{ drawings: Drawing[] }>('GET', '/drawings')).drawings
   createDrawing = (d: NewDrawing) => this.request<Drawing>('POST', '/drawings', d)
   updateDrawing = (id: string, patch: Partial<Pick<Drawing, 'points' | 'style' | 'label'>>) => this.request<Drawing>('PUT', `/drawings/${id}`, patch)
   deleteDrawing = (id: string) => this.request<void>('DELETE', `/drawings/${id}`)

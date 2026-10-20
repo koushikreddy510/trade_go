@@ -5,6 +5,7 @@ import { FinancialsPanel } from './FinancialsPanel'
 import { PositionsPanel } from './PositionsPanel'
 import { RulesPanel } from './RulesPanel'
 import { SignalsPanel } from './SignalsPanel'
+import { TriggersPanel } from './TriggersPanel'
 
 export function Dock() {
   const { ctl } = useApp()
@@ -19,6 +20,7 @@ export function Dock() {
     { id: 'signals', label: 'Signals', count: signals },
     { id: 'rules', label: 'Rules', count: rules },
     { id: 'financials', label: 'Financials' },
+    { id: 'triggers', label: 'Triggers' },
     { id: 'drawings', label: 'Drawings', count: drawings },
   ]
   return (
@@ -39,6 +41,7 @@ export function Dock() {
           {dock === 'signals' && <SignalsPanel />}
           {dock === 'rules' && <RulesPanel />}
           {dock === 'financials' && <FinancialsPanel />}
+          {dock === 'triggers' && <TriggersPanel />}
           {dock === 'drawings' && <DrawingsPanel />}
         </div>
       )}

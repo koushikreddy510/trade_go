@@ -57,13 +57,28 @@ export function ScreenerView() {
     return () => { live = false }
   }, [api])
 
+  const autoSaveWatchlist = async (preset: string | 'custom', matchedRows: ScreenRow[]) => {
+    if (matchedRows.length === 0) return
+    const now = new Date()
+    const stamp = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })
+    const label = preset === 'custom' ? 'Custom screen' : (presets.find((p) => p.name === preset)?.label ?? preset)
+    const name = `${label} · ${now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} ${stamp}`
+    await ctl.createWatchlist(name, matchedRows.slice(0, 200).map((r) => r.symbol))
+  }
+
   const scan = async () => {
-    setBusy('Scanning every symbol’s daily candles… this can take a minute')
+    setBusy("Scanning every symbol's daily candles… this can take a minute")
     setError(null)
     try {
       const out = await api.runScan()
       ctl.notify('success', `Scan done: ${out.stored} symbols analysed${out.skipped ? `, ${out.skipped} skipped (too little history)` : ''}.`)
-      if (active === 'custom') await runCustom(); else await runPreset(active)
+      const scanResult = active === 'custom' ? await api.runScreen(filters, sort.field, sort.descending) : await api.runPreset(active)
+      setResult(scanResult)
+      // Auto-save scan results as a new named watchlist
+      if (scanResult.rows.length > 0) {
+        await autoSaveWatchlist(active, scanResult.rows)
+        ctl.notify('success', `Saved ${scanResult.rows.length} results as a new watchlist.`)
+      }
     } catch (e) { setError(e instanceof Error ? e.message : String(e)) } finally { setBusy(null) }
   }
 
@@ -146,7 +161,7 @@ export function ScreenerView() {
       {error && <p className="error" role="alert">{error}</p>}
 
       {result && result.rows.length === 0 && !busy && !error && (
-        <p className="empty">{result.run_date ? 'No symbols match.' : 'Run the daily scan to analyse every symbol’s 1D candles, then screens are instant.'}</p>
+        <p className="empty">{result.run_date ? 'No symbols match.' : "Run the daily scan to analyse every symbol's 1D candles, then screens are instant."}</p>
       )}
 
       {rows.length > 0 && (

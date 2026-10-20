@@ -18,6 +18,8 @@ export type ChartCallbacks = {
   onMove(id: string, points: DrawingPoint[]): void
   /** The candle under the crosshair (its open time), or null when the pointer leaves the candles. */
   onHover?(time: number | null): void
+  /** A result marker (E icon) was clicked. date = 'YYYY-MM-DD', x/y = pixel offset from chart host top-left. */
+  onResultMarkerClick?(date: string, x: number, y: number): void
 }
 
 const t = (n: number) => n as UTCTimestamp
@@ -27,6 +29,8 @@ export class ChartView {
   private candles: ISeriesApi<'Candlestick'>
   private volume: ISeriesApi<'Histogram'>
   private markers: ISeriesMarkersPluginApi<Time>
+  private volumeMarkers: ISeriesMarkersPluginApi<Time>
+  private resultTimes: Map<number, string> = new Map() // candle time → 'YYYY-MM-DD'
   private primitive = new DrawingsPrimitive()
   private priceLines = new Map<string, IPriceLine>()
   private overlaySeries: ISeriesApi<'Line' | 'Histogram'>[] = []
@@ -69,6 +73,7 @@ export class ChartView {
     this.volume = this.chart.addSeries(HistogramSeries, { priceFormat: { type: 'volume' }, priceScaleId: 'volume', lastValueVisible: false, priceLineVisible: false })
     this.volume.priceScale().applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } })
     this.markers = createSeriesMarkers(this.candles, [])
+    this.volumeMarkers = createSeriesMarkers(this.volume, [])
     this.candles.attachPrimitive(this.primitive)
     this.bindMouse()
   }
@@ -161,6 +166,18 @@ export class ChartView {
     this.markers.setMarkers(specs.map((m) => ({ time: t(m.time), position: m.position, shape: m.shape, color: m.color, text: m.text, size: 1 })))
   }
 
+  /** Place E-circle markers on the volume series so they appear in the volume-bar strip at the bottom. */
+  setResultMarkers(specs: MarkerSpec[]): void {
+    this.resultTimes.clear()
+    for (const m of specs) {
+      const date = m.id.startsWith('result:') ? m.id.slice(7) : null
+      if (date) this.resultTimes.set(m.time, date)
+    }
+    this.volumeMarkers.setMarkers(
+      specs.map((m) => ({ time: t(m.time), position: 'belowBar' as const, shape: 'circle' as const, color: m.color, text: 'E', size: 1 })),
+    )
+  }
+
   /** Dashed entry -> exit lines of a backtest. */
   setSegments(specs: SegmentSpec[]): void {
     for (const s of this.segments) this.chart.removeSeries(s)
@@ -205,6 +222,14 @@ export class ChartView {
     const onClick = (p: MouseEventParams<Time>) => {
       if (this.drag || !p.point) return
       if (this.tool === 'cursor') {
+        // Check if a result marker (E icon) was clicked first
+        if (p.time !== undefined) {
+          const date = this.resultTimes.get(Number(p.time))
+          if (date) {
+            this.cb.onResultMarkerClick?.(date, p.point.x, p.point.y)
+            return
+          }
+        }
         const hit = this.primitive.pick(p.point.x, p.point.y)
         this.cb.onSelect(hit ? hit.id : null)
         return
