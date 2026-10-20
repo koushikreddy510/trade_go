@@ -177,6 +177,8 @@ table.compare tr.median th, table.compare tr.median td { color:var(--muted); fon
 .data-view { padding:14px; overflow:auto; display:flex; flex-direction:column; gap:10px; }
 .data-todo { margin:0; padding:8px 12px 8px 28px; border:1px solid var(--amber); border-radius:4px; color:var(--amber); }
 .data-jobs td { text-align:left; vertical-align:top; white-space:normal; }
+.data-jobs td:nth-child(3) { max-width:320px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.data-jobs td:last-child { white-space:nowrap; }
 .data-param { display:inline-flex; gap:6px; align-items:center; margin-right:10px; }
 .data-changes { display:grid; grid-template-columns:1fr 1fr; gap:14px; } .data-changes p { margin:4px 0; word-break:break-word; }
 .data-jobs th { text-align:left; }
