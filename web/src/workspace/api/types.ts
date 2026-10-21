@@ -85,7 +85,11 @@ export type Rule = {
   exit_timeframe?: Timeframe | null
   exit_condition_2?: Condition | null
   exit_timeframe_2?: Timeframe | null
+  entry_score_indicator?: { name: IndicatorName; params: Record<string, number>; output: string } | null
+  entry_levels?: EntryLevel[] | null
 }
+/** One confidence-scored entry level: enter `qty` shares when distance from indicator is at most `max_dist_pct` (omit for the catch-all last level). */
+export type EntryLevel = { qty: number; max_dist_pct?: number }
 export type RuleDraft = Omit<Rule, 'id'> & { id?: string }
 
 export type Signal = {

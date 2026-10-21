@@ -80,6 +80,7 @@ export function newDraft(symbol: string, timeframe: Timeframe): RuleDraft {
     stop: { type: 'candle', buffer_pct: 0 },
     target: { type: 'rr', ratio: 2 },
     trail: null, exit_condition: null, exit_timeframe: null, exit_condition_2: null, exit_timeframe_2: null,
+    entry_score_indicator: null, entry_levels: null,
   }
 }
 
@@ -154,6 +155,18 @@ export function validateDraft(d: RuleDraft, drawings: Drawing[]): string[] {
   walk(d.condition)
   if (d.exit_condition) walk(d.exit_condition)
   if (d.exit_condition_2) walk(d.exit_condition_2)
+  if (d.entry_levels) {
+    if (d.entry_levels.length < 1 || d.entry_levels.length > 3)
+      errors.push('Entry levels must have 1 to 3 items.')
+    else {
+      d.entry_levels.forEach((lvl, i) => {
+        if (!Number.isInteger(lvl.qty) || lvl.qty < 1) errors.push(`Entry level ${i + 1}: quantity must be a positive whole number.`)
+        if (lvl.max_dist_pct !== undefined && !(lvl.max_dist_pct > 0)) errors.push(`Entry level ${i + 1}: max distance must be above zero.`)
+      })
+      const last = d.entry_levels[d.entry_levels.length - 1]
+      if (last.max_dist_pct !== undefined) errors.push('The last entry level must be the catch-all (no max distance).')
+    }
+  }
   const t = d.trail
   if (t?.type === 'line') add(refProblem(t.drawing_id, t.edge, 'Pick a line for the trailing stop.'))
   if (t?.type === 'pct' && !(t.value > 0)) errors.push('The trailing percentage must be above zero.')

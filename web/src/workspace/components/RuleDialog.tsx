@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { TIMEFRAMES, type Condition, type Drawing, type Edge, type IndicatorName, type Operand, type RuleDraft, type StopSpec, type TargetSpec, type Timeframe, type TrailSpec } from '../api/types'
+import { TIMEFRAMES, type Condition, type Drawing, type Edge, type EntryLevel, type IndicatorName, type Operand, type RuleDraft, type StopSpec, type TargetSpec, type Timeframe, type TrailSpec } from '../api/types'
 import { INDICATORS } from '../lib/indicators'
 import { defaultOperand, defaultTrail, edgeFor, levels, describeCondition, describeStop, describeTarget, describeTrail, validateDraft } from '../lib/rules'
 import { shortSymbol } from '../lib/format'
@@ -295,6 +295,56 @@ function Form({ initial }: { initial: RuleDraft }) {
           <label>Stop-loss<StopEditor stop={draft.stop} drawings={drawings} onChange={(stop) => set({ stop })} /></label>
           <label>Target<TargetEditor target={draft.target} onChange={(target) => set({ target })} /></label>
         </div>
+
+        <h3>Entry sizing</h3>
+        <div className="form-row">
+          <label className="check">
+            <input type="checkbox" aria-label="Score entry size by indicator distance" checked={!!draft.entry_score_indicator}
+              onChange={(e) => set(e.target.checked
+                ? { entry_score_indicator: { name: 'ema', params: { period: 20 }, output: 'value' },
+                    entry_levels: [{ qty: draft.quantity, max_dist_pct: 0.5 }, { qty: Math.ceil(draft.quantity * 0.67), max_dist_pct: 2 }, { qty: Math.ceil(draft.quantity * 0.33) }] }
+                : { entry_score_indicator: null, entry_levels: null })} /> Scale entry size by distance from indicator
+          </label>
+        </div>
+        {draft.entry_score_indicator && draft.entry_levels && <>
+          <div className="form-row">
+            <label>Score indicator<IndicatorFields label="Entry score" value={draft.entry_score_indicator} onChange={(v) => set({ entry_score_indicator: { name: v.name as IndicatorName, params: v.params, output: v.output ?? 'value' } })} /></label>
+          </div>
+          <div className="form-row" style={{ flexDirection: 'column', gap: '4px' }}>
+            {draft.entry_levels.map((lvl, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ minWidth: '80px', fontSize: '13px', color: 'var(--muted)' }}>
+                  {i === draft.entry_levels!.length - 1 ? 'Catch-all' : `Level ${i + 1}`}
+                </span>
+                <label className="param">qty
+                  <input aria-label={`Entry level ${i + 1} quantity`} type="number" min={1} step={1}
+                    value={Number.isFinite(lvl.qty) ? lvl.qty : ''}
+                    onChange={(e) => { const ls = [...draft.entry_levels!]; ls[i] = { ...ls[i], qty: Math.round(num(e.target.value)) }; set({ entry_levels: ls }) }} />
+                </label>
+                {i < draft.entry_levels!.length - 1 && (
+                  <label className="param">max dist %
+                    <input aria-label={`Entry level ${i + 1} max distance`} type="number" min={0.01} step={0.1}
+                      value={Number.isFinite(lvl.max_dist_pct) ? lvl.max_dist_pct : ''}
+                      onChange={(e) => { const ls = [...draft.entry_levels!]; ls[i] = { ...ls[i], max_dist_pct: num(e.target.value) }; set({ entry_levels: ls }) }} />
+                  </label>
+                )}
+                {draft.entry_levels!.length > 1 && (
+                  <button style={{ fontSize: '11px', padding: '2px 6px' }}
+                    onClick={() => { const ls = draft.entry_levels!.filter((_, j) => j !== i); set({ entry_levels: ls }) }}>✕</button>
+                )}
+              </div>
+            ))}
+            {draft.entry_levels.length < 3 && (
+              <button style={{ alignSelf: 'flex-start', fontSize: '12px' }}
+                onClick={() => {
+                  const last = draft.entry_levels![draft.entry_levels!.length - 1]
+                  const newLevel: EntryLevel = { qty: last.qty }
+                  const updated = [...draft.entry_levels!.slice(0, -1), { ...last, max_dist_pct: last.max_dist_pct ?? 2 }, newLevel]
+                  set({ entry_levels: updated })
+                }}>+ Add level</button>
+            )}
+          </div>
+        </>}
 
         <h3>After entry</h3>
         <p className="muted">Both are copied onto the position when it opens, so editing this rule later never changes a trade that is running. They are checked on completed candles only, and the entry candle is skipped.</p>
