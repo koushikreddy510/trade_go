@@ -294,3 +294,15 @@ table.compare tr.median th, table.compare tr.median td { color:var(--muted); fon
 .stop-form input[type=number], .move-stop input { width:90px; }
 .order-actions { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
 .wl-rows .sym { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }   /* long index names (NIFTYMIDCAP100) */
+
+/* orders table + rule watch */
+table.orders-table th, table.orders-table td { text-align:left; }
+.workspace .amber { color:var(--amber); }
+.rule-watch { padding:6px 10px; display:flex; flex-direction:column; gap:8px; }
+.watch-card { border:1px solid var(--line); border-radius:6px; padding:8px 10px; }
+.watch-head { display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 12px; margin-bottom:4px; }
+.watch-name { color:var(--text); }
+.watch-line { padding:2px 0; display:flex; flex-wrap:wrap; align-items:center; gap:4px; }
+.watch-bar { display:inline-block; width:80px; height:5px; background:var(--panel2); border:1px solid var(--line); border-radius:3px; margin-left:6px; overflow:hidden; }
+.watch-bar i { display:block; height:100%; background:var(--amber); }
+.watch-position { border-left:2px solid var(--accent); padding-left:8px; margin-top:4px; }

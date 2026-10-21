@@ -4,6 +4,7 @@ import { DrawingsPanel } from './DrawingsPanel'
 import { FinancialsPanel } from './FinancialsPanel'
 import { OrderTicket } from './OrderTicket'
 import { OrdersPanel } from './OrdersPanel'
+import { RuleWatch } from './RuleWatch'
 import { PositionsPanel } from './PositionsPanel'
 import { RulesPanel } from './RulesPanel'
 import { SignalsPanel } from './SignalsPanel'
@@ -20,6 +21,7 @@ export function Dock() {
   const tabs: { id: DockTab; label: string; count?: number }[] = [
     { id: 'positions', label: 'Positions', count: open },
     { id: 'orders', label: 'Orders' },
+    { id: 'watch', label: 'Watch' },
     { id: 'ticket', label: 'Order ticket' },
     { id: 'signals', label: 'Signals', count: signals },
     { id: 'rules', label: 'Rules', count: rules },
@@ -43,6 +45,7 @@ export function Dock() {
         <div className="dock-body">
           {dock === 'positions' && <PositionsPanel />}
           {dock === 'orders' && <OrdersPanel />}
+          {dock === 'watch' && <RuleWatch />}
           {dock === 'ticket' && <OrderTicket />}
           {dock === 'signals' && <SignalsPanel />}
           {dock === 'rules' && <RulesPanel />}

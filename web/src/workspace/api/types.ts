@@ -70,6 +70,8 @@ export type TargetSpec = { type: 'rr'; ratio: number } | { type: 'pct'; value: n
 
 export type Rule = {
   id: string
+  /** Live execution: null = paper only; else the rule's paper position is mirrored with real orders. */
+  execution?: { account: string; product: 'I' | 'F' | 'M' } | null
   symbol: string
   timeframe: Timeframe
   name: string
@@ -149,12 +151,20 @@ export type LiveOrder = {
   id: string; account: string; symbol: string; side: 'BUY' | 'SELL'; quantity: number; units: number; product: string; price: number
   status: 'submitting' | 'open' | 'complete' | 'rejected' | 'cancelled' | 'failed'; broker_order_id: string | null
   filled_units: number; avg_price: number | null; message: string | null; source: string; created_at: string
-  trigger_price?: number | null; purpose?: string | null; link?: string | null
+  trigger_price?: number | null; purpose?: string | null; link?: string | null; order_type?: 'LMT' | 'MKT' | 'SL' | null
 }
 export type LivePosition = {
   account: string; symbol: string; product: string; side: 'BUY' | 'SELL' | null; units: number; quantity: number
   avg_price: number; ltp: number | null; unrealized: number; realized: number
   stops: { id: string; trigger_price: number; quantity: number }[]
+}
+export type WatchPart = {
+  type: string; label?: string; met: boolean; distance_pct?: number | null; distance?: number; a?: number; b?: number; a_live?: number | null
+  side?: 'above' | 'below'; on_trigger_side?: boolean; children?: WatchPart[]; level?: number; timeframe?: string
+}
+export type WatchRule = {
+  rule: Rule; live: number | null; session_open: boolean; last_candle: number | null; next_check: number | null; entry: WatchPart
+  positions: (Position & { exits: WatchPart[]; live_link: { state: string; note: string | null; last_stop: number | null } | null })[]
 }
 export type AccountLimits = { live_enabled: boolean; max_order_value: number; max_orders_per_day: number }
 export type LiveSettings = { kill_switch: boolean; accounts: Record<string, AccountLimits> }

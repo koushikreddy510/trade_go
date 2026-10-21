@@ -80,13 +80,17 @@ export function LiveOrders({ refreshKey = 0, symbol, product, days = 1 }: { refr
         </div>
       )}
       {orders.length > 0 && (
-        <table className="grid">
-          <thead><tr><th>Time</th><th>Order</th><th>Price</th><th>Status</th><th>From</th><th /></tr></thead>
+        <table className="grid orders-table">
+          <thead><tr><th>Time</th><th>Side</th><th>Symbol</th><th>Qty</th><th>Type</th><th>Product</th><th>Price</th><th>Status</th><th>From</th><th /></tr></thead>
           <tbody>
             {orders.map((o) => (
               <tr key={o.id}>
                 <td>{days > 1 ? new Date(o.created_at).toLocaleString() : new Date(o.created_at).toLocaleTimeString()}</td>
-                <td>{o.side} {o.quantity} {shortSymbol(o.symbol)} <small className="muted">{o.product === 'I' ? 'Intraday' : o.product === 'F' ? 'MTF' : 'NRML'}</small></td>
+                <td className={o.side === 'BUY' ? 'up' : 'down'}><b>{o.side === 'BUY' ? 'Buy' : 'Sell'}</b></td>
+                <td>{shortSymbol(o.symbol)}</td>
+                <td>{o.quantity}{o.units !== o.quantity ? <small className="muted"> ({o.units})</small> : null}</td>
+                <td>{orderType(o)}</td>
+                <td>{o.product === 'I' ? 'Intraday' : o.product === 'F' ? 'MTF' : o.product === 'M' ? 'NRML' : o.product}</td>
                 <td>{o.trigger_price ? <>stop {fmtPrice(o.trigger_price)} <small className="muted">lmt {fmtPrice(o.price)}</small></> : fmtPrice(o.price)}{o.avg_price ? <small className="muted"> filled {fmtPrice(o.avg_price)}</small> : null}</td>
                 <td className={o.status === 'complete' ? 'up' : o.status === 'rejected' || o.status === 'failed' ? 'down' : ''} title={o.message ?? ''}>
                   {o.status}{o.filled_units && o.status !== 'complete' ? ` (${o.filled_units} filled)` : ''}{o.message ? ` · ${o.message}` : ''}
@@ -108,4 +112,10 @@ export function LiveOrders({ refreshKey = 0, symbol, product, days = 1 }: { refr
       )}
     </div>
   )
+}
+
+/** What was asked for: a market order is sent as a limit just through the spread, so say both. */
+function orderType(o: LiveOrder): string {
+  if (o.trigger_price || o.order_type === 'SL') return 'Stop-loss'
+  return o.order_type === 'MKT' ? 'Market' : 'Limit'
 }
