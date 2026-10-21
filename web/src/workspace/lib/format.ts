@@ -36,5 +36,6 @@ export const sign = (n: number | null | undefined): 'up' | 'down' | 'flat' => (!
 /** 'NSE:SBIN-EQ' -> 'SBIN' */
 export function shortSymbol(symbol: string): string {
   const base = symbol.includes(':') ? symbol.split(':')[1] : symbol
+  if (base.endsWith('-INDEX')) return base.slice(0, -6)   // 'NSE:NIFTYIT-INDEX' -> 'NIFTYIT'
   return base.endsWith('-EQ') ? base.slice(0, -3) : base
 }

@@ -149,6 +149,7 @@ export type BrokerQuote = {
   upper_circuit: number | null; lower_circuit: number | null; volume: number | null; oi: number | null
   lot_size: number; tick_size: number | null; expiry: string | null; instrument: string | null
   point_value: number; quantity_unit: 'shares' | 'lots'
+  is_index?: boolean; sector?: string | null; sector_index?: string | null
 }
 export type ProductChoice = { prd: string; name: string }
 export type OrderPreviewRequest = { symbol: string; side: 'BUY' | 'SELL'; quantity: number; product?: string; price_type?: 'LMT' | 'MKT'; price?: number }

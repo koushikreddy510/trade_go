@@ -22,4 +22,19 @@ describe('OrderTicket', () => {
     expect(app.api.orderPreview).toHaveBeenCalledWith(expect.objectContaining({ symbol: 'MCX:SILVERM30NOV26', side: 'SELL', quantity: 2, product: 'M' }))
     expect(screen.getByText('₹60,519.60')).toBeInTheDocument()
   })
+
+  it('shows a stock with its sector index, which opens that index on the chart', async () => {
+    const app = makeApp({}, { symbol: 'NSE:INFY-EQ' })
+    renderIn(<OrderTicket />, app)
+    const link = await screen.findByText('NIFTYIT')
+    expect(screen.getByText('Computers - Software & Consulting')).toBeInTheDocument()
+    fireEvent.click(link)
+    expect(app.store.get().symbol).toBe('NSE:NIFTYIT-INDEX')
+  })
+
+  it('quotes an index but offers no order for it', async () => {
+    renderIn(<OrderTicket />, makeApp({}, { symbol: 'NSE:NIFTY50-INDEX' }))
+    expect(await screen.findByText(/cannot be ordered/)).toBeInTheDocument()
+    expect(screen.queryByText('Check margin')).not.toBeInTheDocument()
+  })
 })

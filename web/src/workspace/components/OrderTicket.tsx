@@ -8,7 +8,7 @@ const errorText = (e: unknown) => (e instanceof Error ? e.message : String(e))
 
 /** Price, depth and contract details for the chart's symbol, and what an order would cost. Preview only: no order is sent. */
 export function OrderTicket() {
-  const { api } = useApp()
+  const { api, ctl } = useApp()
   const symbol = useSel((s) => s.symbol)
   const live = useSel((s) => s.quotes[s.symbol]?.price)
   const exchange = symbol.split(':')[0]
@@ -24,11 +24,17 @@ export function OrderTicket() {
   const [price, setPrice] = useState('')
   const [preview, setPreview] = useState<OrderPreview | null>(null)
   const [busy, setBusy] = useState(false)
+  const [sectorQuote, setSectorQuote] = useState<BrokerQuote | null>(null)
+  const sectorLive = useSel((s) => (sectorQuote ? s.quotes[sectorQuote.symbol]?.price : undefined))
 
   useEffect(() => {
     let alive = true
-    setQuote(null); setPreview(null); setError(null); setPrice(''); setQuantity(1)
-    api.quote(symbol).then((q) => { if (alive) setQuote(q) }).catch((e) => { if (alive) setError(errorText(e)) })
+    setQuote(null); setPreview(null); setError(null); setPrice(''); setQuantity(1); setSectorQuote(null)
+    api.quote(symbol).then((q) => {
+      if (!alive) return
+      setQuote(q)
+      if (q.sector_index) api.quote(q.sector_index).then((sq) => { if (alive) setSectorQuote(sq) }).catch(() => {})
+    }).catch((e) => { if (alive) setError(errorText(e)) })
     api.products().then((all) => {
       if (!alive) return
       const list = all[exchange] ?? []
@@ -61,6 +67,18 @@ export function OrderTicket() {
         <span className="badge preview" title="Margin and value come from the broker's calculator. Nothing is sent to the exchange.">PREVIEW ONLY</span>
       </div>
 
+      {sectorQuote && (
+        <div className="ratios">
+          <span><small>Sector</small> {quote?.sector ?? '-'}</span>
+          <span>
+            <small>Sector index</small>{' '}
+            <button className="link" title="Open the index chart" onClick={() => void ctl.selectSymbol(sectorQuote.symbol)}>{shortSymbol(sectorQuote.symbol)}</button>{' '}
+            <b>{fmtPrice(sectorLive ?? sectorQuote.ltp)}</b>{' '}
+            <span className={sign(sectorQuote.change)}>({fmtPct(sectorQuote.change_pct)})</span>
+          </span>
+        </div>
+      )}
+
       {quote && (
         <div className="ratios">
           <span><small>Bid</small> <b className="up">{fmtPrice(quote.bid)}</b> × {quote.bid_qty ?? '-'}</span>
@@ -73,6 +91,9 @@ export function OrderTicket() {
         </div>
       )}
 
+      {quote?.is_index ? (
+        <p className="empty">An index is for reference: it cannot be ordered. Trade its futures/options, or the stocks in it.</p>
+      ) : (
       <div className="ticket-form">
         <span className="seg">
           <button className={side === 'BUY' ? 'chip active' : 'chip'} onClick={() => setSide('BUY')}>Buy</button>
@@ -98,6 +119,7 @@ export function OrderTicket() {
         )}
         <button className="primary" disabled={busy || !product} onClick={check}>{busy ? 'Checking…' : 'Check margin'}</button>
       </div>
+      )}
 
       {error && <p className="ticket-error" role="alert">{error}</p>}
 

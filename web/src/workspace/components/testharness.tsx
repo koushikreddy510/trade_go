@@ -150,6 +150,9 @@ export function makeApp(over: Record<string, unknown> = {}, initial: Partial<App
       symbol, ltp: 211200, prev_close: 213900, change: -2700, change_pct: -1.26, open: 213000, high: 213500, low: 211000,
       bid: 211190, bid_qty: 3, ask: 211210, ask_qty: 5, upper_circuit: 222000, lower_circuit: 205000, volume: 23384, oi: 1200,
       lot_size: 5, tick_size: 1, expiry: '30-NOV-2026', instrument: 'FUTCOM', point_value: 5, quantity_unit: 'lots' as const,
+      is_index: symbol.endsWith('-INDEX'),
+      sector: symbol === 'NSE:INFY-EQ' ? 'Computers - Software & Consulting' : null,
+      sector_index: symbol === 'NSE:INFY-EQ' ? 'NSE:NIFTYIT-INDEX' : null,
     })),
     orderPreview: vi.fn(async (req: { symbol: string; side: 'BUY' | 'SELL'; quantity: number }) => ({
       ...req, product: 'M', product_name: 'NRML', price_type: 'LMT' as const, price: 211200, units: req.quantity * 5, quantity_unit: 'lots' as const,
