@@ -108,7 +108,7 @@ export function OrderTicket() {
           <div><small>Margin required</small> <b>{rupees(preview.margin_required)}</b></div>
           <div><small>Available funds</small> <b>{rupees(preview.available)}</b></div>
           <div><small>{preview.shortfall > 0 ? 'Shortfall' : 'Left after order'}</small> <b className={preview.shortfall > 0 ? 'down' : 'up'}>{rupees(preview.shortfall > 0 ? preview.shortfall : preview.available - preview.margin_required)}</b></div>
-          {preview.broker_remarks && <div className="muted">Broker: {preview.broker_remarks}</div>}
+          {preview.broker_remarks && <div className="muted">Broker check: {preview.broker_remarks === 'Order Success' ? 'margin check passed (no order was placed)' : preview.broker_remarks}</div>}
           {preview.existing_position && (
             <p className="ticket-warn" role="alert">
               You already hold {preview.existing_position.net_quantity} units of this contract as {preview.existing_position.product === 'M' ? 'NRML' : preview.existing_position.product}.
