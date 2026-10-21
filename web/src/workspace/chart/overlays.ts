@@ -27,7 +27,7 @@ export function positionLines(positions: Position[], symbol: string, quote?: Quo
   const out: PriceLineSpec[] = []
   for (const p of positions) {
     if (p.symbol !== symbol || p.status !== 'open') continue
-    const pnl = quote && p.last_price === undefined ? (quote.price - p.entry_price) * (p.side === 'BUY' ? 1 : -1) * p.quantity : p.unrealized_pnl
+    const pnl = quote && p.last_price === undefined ? (quote.price - p.entry_price) * (p.side === 'BUY' ? 1 : -1) * p.quantity * (p.multiplier ?? 1) : p.unrealized_pnl
     const live = pnl === undefined ? '' : `  ${fmtPnl(pnl)}`
     out.push({ id: `${p.id}:entry`, price: p.entry_price, color: COLORS.entry, dashed: false, title: `${p.side} ${p.quantity} @ ${fmtPrice(p.entry_price)}${live}` })
     if (p.stop !== null) {

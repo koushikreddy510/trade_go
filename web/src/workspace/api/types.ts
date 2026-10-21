@@ -132,6 +132,7 @@ export type Position = {
   exit_qty_1?: number | null
   exit_price_1?: number | null
   exit_pnl_1?: number | null
+  multiplier?: number             // rupees per 1.00 move per unit of quantity: 1 for shares, a futures lot's point value
   last_price?: number
   unrealized_pnl?: number
 }

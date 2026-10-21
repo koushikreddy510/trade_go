@@ -260,6 +260,7 @@ function Form({ initial }: { initial: RuleDraft }) {
   const { ctl } = useApp()
   const drawings = useSel((s) => s.drawings)
   const [draft, setDraft] = useState<RuleDraft>(initial)
+  const isFutures = draft.symbol.startsWith('MCX:')   // MCX contracts trade in lots; P&L uses the lot's point value
   const [saving, setSaving] = useState(false)
   const errors = validateDraft(draft, drawings)
   const set = (patch: Partial<RuleDraft>) => setDraft((d) => ({ ...d, ...patch }))
@@ -284,7 +285,7 @@ function Form({ initial }: { initial: RuleDraft }) {
           <label>Side
             <select aria-label="Rule side" value={draft.side} onChange={(e) => set({ side: e.target.value as 'BUY' | 'SELL' })}><option value="BUY">Buy</option><option value="SELL">Sell short</option></select>
           </label>
-          <label>Quantity<input aria-label="Rule quantity" type="number" min={1} step={1} value={Number.isFinite(draft.quantity) ? draft.quantity : ''} onChange={(e) => set({ quantity: num(e.target.value) })} /></label>
+          <label>{isFutures ? 'Lots' : 'Quantity'}<input aria-label="Rule quantity" type="number" min={1} step={1} value={Number.isFinite(draft.quantity) ? draft.quantity : ''} onChange={(e) => set({ quantity: num(e.target.value) })} /></label>
         </div>
 
         <h3>Enter when</h3>
@@ -379,7 +380,7 @@ function Form({ initial }: { initial: RuleDraft }) {
         </div>
 
         <p className="preview" data-testid="rule-preview">
-          {draft.side === 'BUY' ? 'Buy' : 'Sell'} {draft.quantity} {shortSymbol(draft.symbol)} on the {draft.timeframe} chart when {describeCondition(draft.condition, drawings)}; {describeStop(draft.stop, drawings)}, {describeTarget(draft.target)}{draft.trail ? `; ${describeTrail(draft.trail, drawings)}` : ''}{draft.exit_condition ? `; exit 50% when ${describeCondition(draft.exit_condition, drawings)}${draft.exit_timeframe ? ` on ${draft.exit_timeframe}` : ''}` : ''}{draft.exit_condition_2 ? `; exit remaining 50% when ${describeCondition(draft.exit_condition_2, drawings)}${draft.exit_timeframe_2 ? ` on ${draft.exit_timeframe_2}` : ''}` : ''}.
+          {draft.side === 'BUY' ? 'Buy' : 'Sell'} {draft.quantity}{isFutures ? ` lot${draft.quantity === 1 ? '' : 's'} of` : ''} {shortSymbol(draft.symbol)} on the {draft.timeframe} chart when {describeCondition(draft.condition, drawings)}; {describeStop(draft.stop, drawings)}, {describeTarget(draft.target)}{draft.trail ? `; ${describeTrail(draft.trail, drawings)}` : ''}{draft.exit_condition ? `; exit 50% when ${describeCondition(draft.exit_condition, drawings)}${draft.exit_timeframe ? ` on ${draft.exit_timeframe}` : ''}` : ''}{draft.exit_condition_2 ? `; exit remaining 50% when ${describeCondition(draft.exit_condition_2, drawings)}${draft.exit_timeframe_2 ? ` on ${draft.exit_timeframe_2}` : ''}` : ''}.
         </p>
         {errors.length > 0 && <ul className="errors" role="alert">{errors.map((e) => <li key={e}>{e}</li>)}</ul>}
 
