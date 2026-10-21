@@ -70,6 +70,15 @@ export function RuleWatch() {
             <span className="muted">next check {countdown(w.next_check, now)}</span>
             {!w.rule.enabled && <span className="muted">(rule off; managing its position)</span>}
           </div>
+          {w.plan && (
+            <div className="watch-plan">
+              <div><small className="muted">Stop:</small> {w.plan.stop}
+                {w.plan.stop_if_now !== null && <small className="muted"> · if it fired on the last candle: {w.rule.side === 'BUY' ? 'buy' : 'sell'} @ {num(w.plan.entry_if_now)}, stop {num(w.plan.stop_if_now)} (risk {num(Math.abs((w.plan.entry_if_now ?? 0) - w.plan.stop_if_now))}){w.plan.target_if_now !== null ? `, target ${num(w.plan.target_if_now)}` : ''}</small>}
+                {w.plan.target && <small className="muted"> · target {w.plan.target}</small>}
+              </div>
+              <div><small className="muted">Trailing:</small> {w.plan.trail ?? <span className="muted">none (the stop stays where it starts)</span>}</div>
+            </div>
+          )}
           {w.positions.length === 0 ? <Part p={w.entry} /> : w.positions.map((p) => (
             <div key={p.id} className="watch-position">
               <div className="watch-line">

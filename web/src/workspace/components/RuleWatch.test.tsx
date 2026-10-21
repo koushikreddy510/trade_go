@@ -6,6 +6,7 @@ import { makeApp, renderIn } from './testharness'
 const ROW = {
   rule: { id: 'r1', symbol: 'MCX:GOLDPETAL30OCT26', timeframe: '15m', side: 'SELL', quantity: 2, name: 'sell below day low', enabled: true,
     execution: { account: 'flattrade', product: 'I' } },
+  plan: { stop: 'signal candle high + 0.05%', trail: 'after each completed 5m candle: move the stop to the high of the last 1 candle(s); only ever tighter, never past the close', target: '3R', entry_if_now: 14544, stop_if_now: 14552.3, target_if_now: 14519.1 },
   live: 14530, session_open: true, last_candle: 1, next_check: Math.floor(Date.now() / 1000) + 125, positions: [],
   entry: { type: 'cross', label: 'close crosses below line', met: false, a: 14538, b: 14536, a_live: 14530, side: 'below', distance: -6,
     distance_pct: 0, on_trigger_side: true },
@@ -21,6 +22,8 @@ describe('RuleWatch', () => {
     expect(screen.getByText(/waiting for the candle to close/)).toBeInTheDocument()
     expect(screen.getByText('LIVE Intraday')).toBeInTheDocument()
     expect(screen.getByText(/next check 2:0\d/)).toBeInTheDocument()
+    expect(screen.getByText(/stop 14,552.30 \(risk 8.30\), target 14,519.10/)).toBeInTheDocument()
+    expect(screen.getByText(/after each completed 5m candle/)).toBeInTheDocument()
   })
 
   it('does not call an old cross close', async () => {

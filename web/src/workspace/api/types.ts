@@ -162,8 +162,9 @@ export type WatchPart = {
   type: string; label?: string; met: boolean; distance_pct?: number | null; distance?: number; a?: number; b?: number; a_live?: number | null
   side?: 'above' | 'below'; on_trigger_side?: boolean; state?: 'crossed_earlier'; children?: WatchPart[]; level?: number; timeframe?: string
 }
+export type WatchPlan = { stop: string; trail: string | null; target: string | null; entry_if_now: number | null; stop_if_now: number | null; target_if_now: number | null }
 export type WatchRule = {
-  rule: Rule; live: number | null; session_open: boolean; last_candle: number | null; next_check: number | null; entry: WatchPart
+  plan?: WatchPlan; rule: Rule; live: number | null; session_open: boolean; last_candle: number | null; next_check: number | null; entry: WatchPart
   positions: (Position & { exits: WatchPart[]; live_link: { state: string; note: string | null; last_stop: number | null } | null })[]
 }
 export type AccountLimits = { live_enabled: boolean; max_order_value: number; max_orders_per_day: number }

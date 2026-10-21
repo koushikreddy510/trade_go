@@ -306,3 +306,4 @@ table.orders-table th, table.orders-table td { text-align:left; }
 .watch-bar { display:inline-block; width:80px; height:5px; background:var(--panel2); border:1px solid var(--line); border-radius:3px; margin-left:6px; overflow:hidden; }
 .watch-bar i { display:block; height:100%; background:var(--amber); }
 .watch-position { border-left:2px solid var(--accent); padding-left:8px; margin-top:4px; }
+.watch-plan { padding:2px 0 4px; font-size:12px; border-bottom:1px dashed var(--line); margin-bottom:4px; }
