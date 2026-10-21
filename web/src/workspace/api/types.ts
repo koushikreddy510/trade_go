@@ -145,6 +145,13 @@ export type BrokerStatus = {
   broker: 'flattrade' | 'paytm'; status: 'valid' | 'rejected' | 'unknown' | 'not_configured' | string; detail: string
   auto_login: boolean; has_api_key: boolean; obtained_at: string | null; source: 'auto' | 'manual' | 'env' | null; login_url: string | null
 }
+export type LiveOrder = {
+  id: string; account: string; symbol: string; side: 'BUY' | 'SELL'; quantity: number; units: number; product: string; price: number
+  status: 'submitting' | 'open' | 'complete' | 'rejected' | 'cancelled' | 'failed'; broker_order_id: string | null
+  filled_units: number; avg_price: number | null; message: string | null; source: string; created_at: string
+}
+export type AccountLimits = { live_enabled: boolean; max_order_value: number; max_orders_per_day: number }
+export type LiveSettings = { kill_switch: boolean; accounts: Record<string, AccountLimits> }
 export type Funds = { cash: number; payin: number; collateral: number; margin_used: number; available: number; payout: number; blocked: number }
 export type BrokerQuote = {
   symbol: string; ltp: number | null; prev_close: number | null; change: number | null; change_pct: number | null

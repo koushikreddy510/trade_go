@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { BrokerQuote, OrderPreview, ProductChoice } from '../api/types'
 import { fmtPct, fmtPrice, fmtVolume, shortSymbol, sign } from '../lib/format'
+import { LiveOrders } from './LiveOrders'
 import { useApp, useSel } from './context'
 
 const rupees = (n: number | null | undefined) => (n === null || n === undefined ? '-' : `₹${fmtPrice(n)}`)
@@ -24,6 +25,8 @@ export function OrderTicket() {
   const [price, setPrice] = useState('')
   const [preview, setPreview] = useState<OrderPreview | null>(null)
   const [busy, setBusy] = useState(false)
+  const [sending, setSending] = useState(false)
+  const [ordersKey, setOrdersKey] = useState(0)
   const [sectorQuote, setSectorQuote] = useState<BrokerQuote | null>(null)
   const sectorLive = useSel((s) => (sectorQuote ? s.quotes[sectorQuote.symbol]?.price : undefined))
 
@@ -56,6 +59,21 @@ export function OrderTicket() {
     }
   }
 
+  const send = async () => {
+    if (!preview) return
+    const what = `${preview.side} ${preview.quantity} ${preview.quantity_unit === 'lots' ? 'lot(s) of ' : ''}${shortSymbol(symbol)} · ${preview.product_name} · ${priceType === 'MKT' ? 'at market (limit just through the spread)' : `limit ${fmtPrice(preview.price)}`}`
+    if (!window.confirm(`Send this LIVE order to the exchange?\n\n${what}\n\nMargin ≈ ₹${fmtPrice(preview.margin_required)}`)) return
+    setSending(true); setError(null)
+    try {
+      await api.placeOrder({ account: 'flattrade', symbol, side, quantity, product, price_type: priceType, price: priceType === 'LMT' && price ? Number(price) : undefined })
+      setPreview(null)
+    } catch (e) {
+      setError(errorText(e))
+    } finally {
+      setSending(false); setOrdersKey((k) => k + 1)
+    }
+  }
+
   return (
     <div className="panel ticket" aria-label="Order ticket">
       <div className="panel-head">
@@ -63,7 +81,7 @@ export function OrderTicket() {
         <span className="muted">{exchange}{quote?.instrument ? ` · ${quote.instrument}` : ''}{quote?.expiry ? ` · expires ${quote.expiry}` : ''}</span>
         <span className="ticket-ltp">{fmtPrice(ltp)}</span>
         {quote?.change !== null && quote?.change !== undefined && <span className={sign(quote.change)}>{fmtPrice(quote.change)} ({fmtPct(quote.change_pct)})</span>}
-        <span className="badge preview" title="Margin and value come from the broker's calculator. Nothing is sent to the exchange.">PREVIEW ONLY</span>
+        <span className="badge preview" title="Check margin only calculates; an order is sent only with 'Place live order' and a confirmation.">MARGIN CHECK FIRST</span>
       </div>
 
       {sectorQuote && (
@@ -122,6 +140,8 @@ export function OrderTicket() {
 
       {error && <p className="ticket-error" role="alert">{error}</p>}
 
+      <LiveOrders refreshKey={ordersKey} />
+
       {preview && (
         <div className="ticket-result" aria-label="Order preview">
           <div><small>{preview.side === 'BUY' ? 'Buy' : 'Sell'} {preview.quantity} {preview.quantity_unit === 'lots' ? `lot${preview.quantity === 1 ? '' : 's'} (${preview.units} units)` : 'shares'} · {preview.product_name} @ {fmtPrice(preview.price)}</small></div>
@@ -130,6 +150,11 @@ export function OrderTicket() {
           <div><small>Available funds</small> <b>{rupees(preview.available)}</b></div>
           <div><small>{preview.shortfall > 0 ? 'Shortfall' : 'Left after order'}</small> <b className={preview.shortfall > 0 ? 'down' : 'up'}>{rupees(preview.shortfall > 0 ? preview.shortfall : preview.available - preview.margin_required)}</b></div>
           {preview.broker_remarks && <div className="muted">Broker check: {preview.broker_remarks === 'Order Success' ? 'margin check passed (no order was placed)' : preview.broker_remarks}</div>}
+          <div className="ticket-send">
+            <button className="primary live" disabled={sending || preview.shortfall > 0} title={preview.shortfall > 0 ? 'Not enough funds for this order' : 'Send this order to the exchange'} onClick={() => void send()}>
+              {sending ? 'Sending…' : `Place live ${preview.side === 'BUY' ? 'buy' : 'sell'} order`}
+            </button>
+          </div>
           {preview.existing_position && (
             <p className="ticket-warn" role="alert">
               You already hold {preview.existing_position.net_quantity} units of this contract as {preview.existing_position.product === 'M' ? 'NRML' : preview.existing_position.product}.

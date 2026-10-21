@@ -149,6 +149,17 @@ export function makeApp(over: Record<string, unknown> = {}, initial: Partial<App
       { broker: 'paytm' as const, status: 'not_configured', detail: '', auto_login: false, has_api_key: false, obtained_at: null, source: null, login_url: null },
     ]),
     brokerLogin: vi.fn(async (broker: string) => ({ broker, source: 'auto', obtained_at: '2026-10-21T02:15:00Z' })),
+    liveSettings: vi.fn(async () => ({ kill_switch: false, accounts: { flattrade: { live_enabled: false, max_order_value: 20000, max_orders_per_day: 20 } } })),
+    liveOrders: vi.fn(async () => [] as unknown[]),
+    placeOrder: vi.fn(async function (this: unknown, req: { symbol: string; side: 'BUY' | 'SELL'; quantity: number; product: string }) {
+      const order = { id: 'o1', account: 'flattrade', symbol: req.symbol, side: req.side, quantity: req.quantity, units: req.quantity, product: req.product,
+        price: 967.6, status: 'open', broker_order_id: 'B1', filled_units: 0, avg_price: null, message: null, source: 'ticket', created_at: '2026-10-21T09:20:00Z' }
+      api.liveOrders.mockResolvedValue([order])
+      return order
+    }),
+    cancelOrder: vi.fn(async (id: string) => ({ id, status: 'cancelled' })),
+    setLiveSettings: vi.fn(async () => ({ live_enabled: true, max_order_value: 20000, max_orders_per_day: 20 })),
+    killSwitch: vi.fn(async (on: boolean) => ({ kill_switch: on })),
     funds: vi.fn(async () => ({ cash: 15000, payin: 0, collateral: 0, margin_used: 0, available: 15000, payout: 0, blocked: 0 })),
     products: vi.fn(async () => ({
       MCX: [{ prd: 'M', name: 'NRML', listed: true }, { prd: 'I', name: 'Intraday', listed: true }],

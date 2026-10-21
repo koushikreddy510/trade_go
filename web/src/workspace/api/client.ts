@@ -1,5 +1,5 @@
 import type {
-  BacktestFull, BrokerQuote, BrokerStatus, DataOverview, Funds, OrderPreview, OrderPreviewRequest, ProductChoice, ScreenColumn, BacktestRequest, BacktestRow, Candle, Drawing, Financials, NewDrawing, Position, Preset, RecentResult, Rule, RuleDraft, ScreenFilter, ScreenResult,
+  AccountLimits, BacktestFull, BrokerQuote, BrokerStatus, LiveOrder, LiveSettings, DataOverview, Funds, OrderPreview, OrderPreviewRequest, ProductChoice, ScreenColumn, BacktestRequest, BacktestRow, Candle, Drawing, Financials, NewDrawing, Position, Preset, RecentResult, Rule, RuleDraft, ScreenFilter, ScreenResult,
   SectorCompare, SectorGroup, ServerStatus, Signal, SymbolHit, SyncLink, SyncPlan, SyncResult, SyncSettings, SyncStrategy, Timeframe, Watchlist,
 } from './types'
 import { draftToPayload } from '../lib/rules'
@@ -47,6 +47,13 @@ export class ApiClient {
   brokers = async () => (await this.request<{ brokers: BrokerStatus[] }>('GET', '/brokers')).brokers
   /** Log in now: unattended when `code` is left out, else with the URL the broker's login page redirected to. */
   brokerLogin = (broker: string, code?: string) => this.request<{ broker: string; source: string; obtained_at: string }>('POST', `/brokers/${broker}/login`, code ? { code } : {})
+  liveOrders = async () => (await this.request<{ orders: LiveOrder[] }>('GET', '/orders')).orders
+  /** Sends a REAL order (after the server's checks). */
+  placeOrder = (req: OrderPreviewRequest & { account: string; product: string }) => this.request<LiveOrder>('POST', '/orders', { ...req, confirm: true })
+  cancelOrder = (id: string) => this.request<LiveOrder>('POST', `/orders/${id}/cancel`)
+  liveSettings = () => this.request<LiveSettings>('GET', '/live-settings')
+  setLiveSettings = (account: string, body: Partial<AccountLimits>) => this.request<AccountLimits>('PUT', `/live-settings/${account}`, body)
+  killSwitch = (on: boolean) => this.request<{ kill_switch: boolean }>('POST', '/kill-switch', { on })
   funds = () => this.request<Funds>('GET', '/account/funds')
   products = () => this.request<Record<string, ProductChoice[]>>('GET', '/account/products')
   quote = (symbol: string) => this.request<BrokerQuote>('GET', `/quote${this.qs({ symbol })}`)

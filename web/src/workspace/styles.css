@@ -282,3 +282,11 @@ table.compare tr.median th, table.compare tr.median td { color:var(--muted); fon
   .broker-logins tr { border:1px solid var(--line); border-radius:6px; padding:8px; margin-bottom:8px; }
   .broker-logins td { border:none !important; padding:4px 0 !important; }
 }
+
+/* live orders */
+.live-orders { padding:4px 10px 8px; display:flex; flex-direction:column; gap:6px; }
+.live-bar { display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; }
+.badge.live-on { background:#3a0b0b; color:#ff8a80; border:1px solid #7a1f1f; border-radius:4px; padding:2px 8px; font-size:11px; font-weight:700; }
+.badge.live-off { border:1px solid var(--line); color:var(--muted); border-radius:4px; padding:2px 8px; font-size:11px; font-weight:700; }
+.ticket-send { flex-basis:100%; }
+.workspace button.primary.live { background:var(--down); border-color:var(--down); color:#fff; }
