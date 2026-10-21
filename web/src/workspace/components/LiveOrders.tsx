@@ -8,7 +8,7 @@ const errorText = (e: unknown) => (e instanceof Error ? e.message : String(e))
 const OPEN = new Set(['submitting', 'open'])
 
 /** Live trading controls for the ticket: on/off and limits for the account, the kill switch, and today's orders. */
-export function LiveOrders({ refreshKey, symbol, product }: { refreshKey: number; symbol?: string; product?: string }) {
+export function LiveOrders({ refreshKey = 0, symbol, product, days = 1 }: { refreshKey?: number; symbol?: string; product?: string; days?: number }) {
   const { api } = useApp()
   const [settings, setSettings] = useState<LiveSettings | null>(null)
   const [orders, setOrders] = useState<LiveOrder[]>([])
@@ -19,10 +19,10 @@ export function LiveOrders({ refreshKey, symbol, product }: { refreshKey: number
   const [moves, setMoves] = useState<Record<string, string>>({})
   const load = useCallback(async () => {
     try {
-      const [s, o] = await Promise.all([api.liveSettings(), api.liveOrders()])
+      const [s, o] = await Promise.all([api.liveSettings(), api.liveOrders(days)])
       setSettings(s); setOrders(o)
     } catch (e) { setError(errorText(e)) }
-  }, [api])
+  }, [api, days])
   useEffect(() => { void load() }, [load, refreshKey])
   const anyOpen = orders.some((o) => OPEN.has(o.status))
   useEffect(() => {
@@ -81,16 +81,17 @@ export function LiveOrders({ refreshKey, symbol, product }: { refreshKey: number
       )}
       {orders.length > 0 && (
         <table className="grid">
-          <thead><tr><th>Time</th><th>Order</th><th>Price</th><th>Status</th><th /></tr></thead>
+          <thead><tr><th>Time</th><th>Order</th><th>Price</th><th>Status</th><th>From</th><th /></tr></thead>
           <tbody>
             {orders.map((o) => (
               <tr key={o.id}>
-                <td>{new Date(o.created_at).toLocaleTimeString()}</td>
+                <td>{days > 1 ? new Date(o.created_at).toLocaleString() : new Date(o.created_at).toLocaleTimeString()}</td>
                 <td>{o.side} {o.quantity} {shortSymbol(o.symbol)} <small className="muted">{o.product === 'I' ? 'Intraday' : o.product === 'F' ? 'MTF' : 'NRML'}</small></td>
                 <td>{o.trigger_price ? <>stop {fmtPrice(o.trigger_price)} <small className="muted">lmt {fmtPrice(o.price)}</small></> : fmtPrice(o.price)}{o.avg_price ? <small className="muted"> filled {fmtPrice(o.avg_price)}</small> : null}</td>
                 <td className={o.status === 'complete' ? 'up' : o.status === 'rejected' || o.status === 'failed' ? 'down' : ''} title={o.message ?? ''}>
                   {o.status}{o.filled_units && o.status !== 'complete' ? ` (${o.filled_units} filled)` : ''}{o.message ? ` · ${o.message}` : ''}
                 </td>
+                <td><small className="muted">{o.source === 'ticket' ? 'ticket' : o.source.startsWith('rule:') ? `rule${o.purpose ? ` · ${o.purpose}` : ''}` : o.source}</small></td>
                 <td className="order-actions">
                   {OPEN.has(o.status) && o.trigger_price && o.broker_order_id && (
                     <span className="move-stop">

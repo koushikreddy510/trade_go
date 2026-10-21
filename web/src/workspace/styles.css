@@ -48,7 +48,7 @@ html, body, #root { margin:0; padding:0; height:100%; overflow:hidden; backgroun
 .search-results li span { color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .search-results li.active, .search-results li:hover { background:var(--hover); }
 .wl-rows { list-style:none; margin:0; padding:0; overflow:auto; flex:1; }
-.wl-rows .row { display:grid; grid-template-columns:1fr auto 64px 18px; gap:6px; padding:6px 10px; cursor:pointer; border-bottom:1px solid var(--hover); align-items:center; }
+.wl-rows .row { display:grid; grid-template-columns:minmax(0,1fr) auto 64px 18px; gap:6px; padding:6px 10px; cursor:pointer; border-bottom:1px solid var(--hover); align-items:center; }
 .wl-rows .row:hover { background:var(--hover); } .wl-rows .row.selected { background:var(--hover); box-shadow:inset 2px 0 var(--accent); }
 .wl-rows .sym { font-weight:600; } .wl-rows .px, .wl-rows .chg { text-align:right; font-variant-numeric:tabular-nums; }
 .px.up, .chg.up, .pnl.up, td.up { color:var(--up); } .px.down, .chg.down, .pnl.down, td.down { color:var(--down); }
@@ -293,3 +293,4 @@ table.compare tr.median th, table.compare tr.median td { color:var(--muted); fon
 .stop-form, .move-stop { display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
 .stop-form input[type=number], .move-stop input { width:90px; }
 .order-actions { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+.wl-rows .sym { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }   /* long index names (NIFTYMIDCAP100) */

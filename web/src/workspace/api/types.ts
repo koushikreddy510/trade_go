@@ -151,6 +151,11 @@ export type LiveOrder = {
   filled_units: number; avg_price: number | null; message: string | null; source: string; created_at: string
   trigger_price?: number | null; purpose?: string | null; link?: string | null
 }
+export type LivePosition = {
+  account: string; symbol: string; product: string; side: 'BUY' | 'SELL' | null; units: number; quantity: number
+  avg_price: number; ltp: number | null; unrealized: number; realized: number
+  stops: { id: string; trigger_price: number; quantity: number }[]
+}
 export type AccountLimits = { live_enabled: boolean; max_order_value: number; max_orders_per_day: number }
 export type LiveSettings = { kill_switch: boolean; accounts: Record<string, AccountLimits> }
 export type Funds = { cash: number; payin: number; collateral: number; margin_used: number; available: number; payout: number; blocked: number }

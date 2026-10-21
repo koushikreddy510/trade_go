@@ -3,6 +3,7 @@ import { describeExit, describeTrail } from '../lib/rules'
 import { distanceToExit, livePnl, totalPnl } from '../lib/positions'
 import { fmtPnl, fmtPrice, shortSymbol, sign } from '../lib/format'
 import { formatIst } from '../lib/timeframes'
+import { LivePositions } from './LivePositions'
 import { useApp, useSel } from './context'
 
 export function PositionsPanel() {
@@ -14,6 +15,7 @@ export function PositionsPanel() {
 
   return (
     <div className="panel" aria-label="Positions">
+      <LivePositions />
       <div className="panel-head">
         <b>Open paper positions</b>
         {open.length > 0 && <span className={`pnl ${sign(total)}`} data-testid="total-pnl">{fmtPnl(total)}{known < open.length ? ' (partial)' : ''}</span>}

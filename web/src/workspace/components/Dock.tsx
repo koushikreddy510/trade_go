@@ -3,6 +3,7 @@ import { useApp, useSel } from './context'
 import { DrawingsPanel } from './DrawingsPanel'
 import { FinancialsPanel } from './FinancialsPanel'
 import { OrderTicket } from './OrderTicket'
+import { OrdersPanel } from './OrdersPanel'
 import { PositionsPanel } from './PositionsPanel'
 import { RulesPanel } from './RulesPanel'
 import { SignalsPanel } from './SignalsPanel'
@@ -18,6 +19,7 @@ export function Dock() {
   const drawings = useSel((s) => s.drawings.length)
   const tabs: { id: DockTab; label: string; count?: number }[] = [
     { id: 'positions', label: 'Positions', count: open },
+    { id: 'orders', label: 'Orders' },
     { id: 'ticket', label: 'Order ticket' },
     { id: 'signals', label: 'Signals', count: signals },
     { id: 'rules', label: 'Rules', count: rules },
@@ -40,6 +42,7 @@ export function Dock() {
       {!collapsed && (
         <div className="dock-body">
           {dock === 'positions' && <PositionsPanel />}
+          {dock === 'orders' && <OrdersPanel />}
           {dock === 'ticket' && <OrderTicket />}
           {dock === 'signals' && <SignalsPanel />}
           {dock === 'rules' && <RulesPanel />}

@@ -1,5 +1,5 @@
 import type {
-  AccountLimits, BacktestFull, BrokerQuote, BrokerStatus, LiveOrder, LiveSettings, DataOverview, Funds, OrderPreview, OrderPreviewRequest, ProductChoice, ScreenColumn, BacktestRequest, BacktestRow, Candle, Drawing, Financials, NewDrawing, Position, Preset, RecentResult, Rule, RuleDraft, ScreenFilter, ScreenResult,
+  AccountLimits, BacktestFull, BrokerQuote, BrokerStatus, LiveOrder, LivePosition, LiveSettings, DataOverview, Funds, OrderPreview, OrderPreviewRequest, ProductChoice, ScreenColumn, BacktestRequest, BacktestRow, Candle, Drawing, Financials, NewDrawing, Position, Preset, RecentResult, Rule, RuleDraft, ScreenFilter, ScreenResult,
   SectorCompare, SectorGroup, ServerStatus, Signal, SymbolHit, SyncLink, SyncPlan, SyncResult, SyncSettings, SyncStrategy, Timeframe, Watchlist,
 } from './types'
 import { draftToPayload } from '../lib/rules'
@@ -47,7 +47,8 @@ export class ApiClient {
   brokers = async () => (await this.request<{ brokers: BrokerStatus[] }>('GET', '/brokers')).brokers
   /** Log in now: unattended when `code` is left out, else with the URL the broker's login page redirected to. */
   brokerLogin = (broker: string, code?: string) => this.request<{ broker: string; source: string; obtained_at: string }>('POST', `/brokers/${broker}/login`, code ? { code } : {})
-  liveOrders = async () => (await this.request<{ orders: LiveOrder[] }>('GET', '/orders')).orders
+  liveOrders = async (days = 1) => (await this.request<{ orders: LiveOrder[] }>('GET', `/orders${this.qs({ days })}`)).orders
+  livePositions = async () => (await this.request<{ positions: LivePosition[] }>('GET', '/live-positions')).positions
   /** Sends a REAL order (after the server's checks). */
   placeOrder = (req: Omit<OrderPreviewRequest, 'price_type'> & { account: string; product: string; price_type?: 'LMT' | 'MKT' | 'SL'; trigger_price?: number }) =>
     this.request<LiveOrder>('POST', '/orders', { ...req, confirm: true })
