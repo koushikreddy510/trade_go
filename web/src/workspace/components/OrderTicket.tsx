@@ -39,8 +39,7 @@ export function OrderTicket() {
       if (!alive) return
       const list = all[exchange] ?? []
       setProducts(list)
-      const preferred = derivative ? 'M' : 'C'
-      setProduct(list.some((p) => p.prd === preferred) ? preferred : list[0]?.prd ?? '')
+      setProduct((list.find((p) => p.listed) ?? list[0])?.prd ?? '')
     }).catch(() => {})
     return () => { alive = false }
   }, [api, symbol, exchange, derivative])
@@ -104,7 +103,7 @@ export function OrderTicket() {
         </label>
         <label>Product
           <select aria-label="Order product" value={product} onChange={(e) => setProduct(e.target.value)}>
-            {products.map((p) => <option key={p.prd} value={p.prd}>{p.name}</option>)}
+            {products.map((p) => <option key={p.prd} value={p.prd}>{p.name}{p.listed ? '' : ' (not activated yet)'}</option>)}
           </select>
         </label>
         <label>Type

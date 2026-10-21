@@ -37,4 +37,12 @@ describe('OrderTicket', () => {
     expect(await screen.findByText(/cannot be ordered/)).toBeInTheDocument()
     expect(screen.queryByText('Check margin')).not.toBeInTheDocument()
   })
+
+  it('offers stocks only MTF or Intraday, starting on Intraday while MTF is not activated', async () => {
+    renderIn(<OrderTicket />, makeApp({}, { symbol: 'NSE:SBIN-EQ' }))
+    const select = (await screen.findByLabelText('Order product')) as HTMLSelectElement
+    await screen.findByText('MTF (not activated yet)')
+    expect([...select.options].map((o) => o.textContent)).toEqual(['MTF (not activated yet)', 'Intraday'])
+    expect(select.value).toBe('I')
+  })
 })

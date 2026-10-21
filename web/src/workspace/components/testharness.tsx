@@ -145,7 +145,10 @@ export function makeApp(over: Record<string, unknown> = {}, initial: Partial<App
     financials: vi.fn(async (symbol: string) => ({ ...financials({ available: false, company: '', quarterly: [], annual: [], ratios: {}, announcements: [] }), symbol })),
     searchSymbols: vi.fn(async () => [] as { symbol: string; exchange: string; name: string; sector: string }[]),
     funds: vi.fn(async () => ({ cash: 15000, payin: 0, collateral: 0, margin_used: 0, available: 15000, payout: 0, blocked: 0 })),
-    products: vi.fn(async () => ({ MCX: [{ prd: 'M', name: 'NRML' }, { prd: 'I', name: 'MIS' }], NSE: [{ prd: 'C', name: 'CNC' }, { prd: 'I', name: 'MIS' }] })),
+    products: vi.fn(async () => ({
+      MCX: [{ prd: 'M', name: 'NRML', listed: true }, { prd: 'I', name: 'Intraday', listed: true }],
+      NSE: [{ prd: 'F', name: 'MTF', listed: false }, { prd: 'I', name: 'Intraday', listed: true }],
+    })),
     quote: vi.fn(async (symbol: string) => ({
       symbol, ltp: 211200, prev_close: 213900, change: -2700, change_pct: -1.26, open: 213000, high: 213500, low: 211000,
       bid: 211190, bid_qty: 3, ask: 211210, ask_qty: 5, upper_circuit: 222000, lower_circuit: 205000, volume: 23384, oi: 1200,

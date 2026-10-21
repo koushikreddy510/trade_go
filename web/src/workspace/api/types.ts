@@ -151,7 +151,8 @@ export type BrokerQuote = {
   point_value: number; quantity_unit: 'shares' | 'lots'
   is_index?: boolean; sector?: string | null; sector_index?: string | null
 }
-export type ProductChoice = { prd: string; name: string }
+/** Our products only: stocks MTF or Intraday, derivatives NRML or Intraday. `listed` = the broker has it active for the account. */
+export type ProductChoice = { prd: string; name: string; listed: boolean }
 export type OrderPreviewRequest = { symbol: string; side: 'BUY' | 'SELL'; quantity: number; product?: string; price_type?: 'LMT' | 'MKT'; price?: number }
 export type OrderPreview = {
   symbol: string; side: 'BUY' | 'SELL'; product: string; product_name: string; price_type: 'LMT' | 'MKT'; price: number
