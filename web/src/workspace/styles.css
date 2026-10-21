@@ -233,3 +233,52 @@ table.compare tr.median th, table.compare tr.median td { color:var(--muted); fon
 .broker-actions { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
 .broker-manual { display:inline-flex; flex-wrap:wrap; gap:6px; align-items:center; }
 .broker-manual input { width:260px; max-width:100%; }
+
+/* ------------------------------------------------------------------ phones (Workspace.tsx PHONE_QUERY) */
+@media (max-width: 760px) {
+  .workspace { font-size:14px; }
+  .workspace input, .workspace select, .workspace textarea { font-size:16px; }          /* iOS zooms into anything smaller */
+  .workspace button { padding:7px 12px; }
+  .workspace button.small { padding:5px 10px; }
+
+  .topbar { flex-wrap:wrap; gap:6px 10px; padding:6px 10px; }
+  .brand span, .topbar .link { display:none; }
+  .topbar nav { order:10; flex-basis:100%; min-width:0; overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+  .topbar nav::-webkit-scrollbar { display:none; }
+  .topbar nav .tab { flex:none; padding:8px 10px; }
+
+  .body { position:relative; }
+  .body.phone .watchlist:not(.wl-collapsed) { position:absolute; z-index:40; top:0; bottom:0; left:0; width:min(88vw, 340px); box-shadow:8px 0 24px #000a; }
+  .wl-backdrop { position:absolute; inset:0; z-index:39; background:#0008; }
+  .wl-rows .row { padding:10px 12px; }
+
+  .chart-toolbar { gap:6px 10px; padding:6px 8px; min-width:0; }
+  .chart-toolbar > * { min-width:0; max-width:100%; }
+  .main, .chart-area { min-width:0; max-width:100%; }
+  .workspace { max-width:100vw; overflow-x:hidden; }
+  .chart-toolbar .title { font-size:14px; }
+  .chart-area { min-height:46vh; }
+  .dock { height:auto; max-height:52vh; }
+  .dock-tabs { overflow-x:auto; scrollbar-width:none; }
+  .dock-tabs::-webkit-scrollbar { display:none; }
+  .dock-tabs .tab { flex:none; padding:8px 10px; }
+  .dock-body, .data-view, .view { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .panel-head { gap:8px; }
+  .ratios { gap:4px 12px; }
+
+  .modal-backdrop { align-items:stretch; }
+  .modal { width:100vw; max-height:none; height:100%; border-radius:0; padding:12px 14px; }
+  .modal-actions { position:sticky; bottom:0; background:var(--panel); padding:8px 0; }
+
+  .bt-cards { grid-template-columns:repeat(2, 1fr); }
+  .cards { grid-template-columns:1fr; }
+  .data-view, .view { padding:10px; }
+  table.grid { min-width:560px; }
+  .ticket-form input, .ticket-form select { width:120px; }
+  .broker-manual input { width:100%; }
+  .broker-logins table.grid { min-width:0; }
+  .broker-logins thead { display:none; }
+  .broker-logins table, .broker-logins tbody, .broker-logins tr, .broker-logins td { display:block; width:100%; }
+  .broker-logins tr { border:1px solid var(--line); border-radius:6px; padding:8px; margin-bottom:8px; }
+  .broker-logins td { border:none !important; padding:4px 0 !important; }
+}

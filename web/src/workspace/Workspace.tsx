@@ -23,14 +23,33 @@ import { DataView } from './views/DataView'
 import { StrategiesView } from './views/StrategiesView'
 import './styles.css'
 
+export const PHONE_QUERY = '(max-width: 760px)'
+
+/** True on a phone-sized screen; follows rotation and window resizes. */
+export function usePhone(): boolean {
+  const query = typeof window !== 'undefined' && window.matchMedia ? window.matchMedia(PHONE_QUERY) : null
+  const [phone, setPhone] = useState(() => query?.matches ?? false)
+  useEffect(() => {
+    if (!query) return
+    const on = (e: MediaQueryListEvent) => setPhone(e.matches)
+    query.addEventListener?.('change', on)
+    return () => query.removeEventListener?.('change', on)
+  }, [query])
+  return phone
+}
+
 function Body() {
   const { ctl } = useApp()
   const view = useSel((s) => s.view)
+  const symbol = useSel((s) => s.symbol)
   const chartFull = useSel((s) => s.chartFull)
-  const [wlCollapsed, setWlCollapsed] = useState(false)
+  const phone = usePhone()
+  const [wlCollapsed, setWlCollapsed] = useState(phone)   // on a phone the watchlist is a drawer, closed until asked for
+  useEffect(() => { if (phone) setWlCollapsed(true) }, [phone, symbol])   // ...and it closes once a symbol is picked
   return (
-    <div className="body">
+    <div className={phone ? 'body phone' : 'body'}>
       {!chartFull && <WatchlistPanel collapsed={wlCollapsed} onToggle={() => setWlCollapsed((v) => !v)} />}
+      {phone && !wlCollapsed && !chartFull && <div className="wl-backdrop" onClick={() => setWlCollapsed(true)} />}
       <main className="main">
         {view === 'chart' && (
           <>
