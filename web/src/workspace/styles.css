@@ -307,3 +307,7 @@ table.orders-table th, table.orders-table td { text-align:left; }
 .watch-bar i { display:block; height:100%; background:var(--amber); }
 .watch-position { border-left:2px solid var(--accent); padding-left:8px; margin-top:4px; }
 .watch-plan { padding:2px 0 4px; font-size:12px; border-bottom:1px dashed var(--line); margin-bottom:4px; }
+table.triggers-table th, table.triggers-table td { text-align:left; vertical-align:top; }
+.trigger-rules { min-width:320px; }
+.trigger-rule { padding:2px 0 6px; border-bottom:1px dashed var(--line); }
+.trigger-rule:last-child { border-bottom:none; }
