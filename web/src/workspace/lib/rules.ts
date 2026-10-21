@@ -79,7 +79,7 @@ export function newDraft(symbol: string, timeframe: Timeframe): RuleDraft {
     condition: { type: 'cross', direction: 'above', a: { kind: 'close' }, b: { kind: 'indicator', name: 'ema', params: { period: 20 }, output: 'value' } },
     stop: { type: 'candle', buffer_pct: 0 },
     target: { type: 'rr', ratio: 2 },
-    trail: null, exit_condition: null, exit_timeframe: null,
+    trail: null, exit_condition: null, exit_timeframe: null, exit_condition_2: null, exit_timeframe_2: null,
   }
 }
 
@@ -153,6 +153,7 @@ export function validateDraft(d: RuleDraft, drawings: Drawing[]): string[] {
   }
   walk(d.condition)
   if (d.exit_condition) walk(d.exit_condition)
+  if (d.exit_condition_2) walk(d.exit_condition_2)
   const t = d.trail
   if (t?.type === 'line') add(refProblem(t.drawing_id, t.edge, 'Pick a line for the trailing stop.'))
   if (t?.type === 'pct' && !(t.value > 0)) errors.push('The trailing percentage must be above zero.')

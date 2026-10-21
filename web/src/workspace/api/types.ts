@@ -83,6 +83,8 @@ export type Rule = {
   trail?: TrailSpec | null
   exit_condition?: Condition | null
   exit_timeframe?: Timeframe | null
+  exit_condition_2?: Condition | null
+  exit_timeframe_2?: Timeframe | null
 }
 export type RuleDraft = Omit<Rule, 'id'> & { id?: string }
 
@@ -120,6 +122,12 @@ export type Position = {
   trail?: TrailSpec | null
   exit_condition?: Condition | null
   exit_timeframe?: Timeframe | null
+  exit_condition_2?: Condition | null
+  exit_timeframe_2?: Timeframe | null
+  exit_level?: 1 | 2
+  exit_qty_1?: number | null
+  exit_price_1?: number | null
+  exit_pnl_1?: number | null
   last_price?: number
   unrealized_pnl?: number
 }

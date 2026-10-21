@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { TIMEFRAMES, type Condition, type Drawing, type Edge, type IndicatorName, type Operand, type RuleDraft, type StopSpec, type TargetSpec, type Timeframe, type TrailSpec } from '../api/types'
 import { INDICATORS } from '../lib/indicators'
-import { defaultOperand, defaultTrail, edgeFor, levels, describeCondition, describeExit, describeStop, describeTarget, describeTrail, validateDraft } from '../lib/rules'
+import { defaultOperand, defaultTrail, edgeFor, levels, describeCondition, describeStop, describeTarget, describeTrail, validateDraft } from '../lib/rules'
 import { shortSymbol } from '../lib/format'
 import { useApp, useSel } from './context'
 
@@ -311,13 +311,25 @@ function Form({ initial }: { initial: RuleDraft }) {
         </div>
         {draft.exit_condition && <ConditionEditor path="x" cond={draft.exit_condition} drawings={drawings} onChange={(exit_condition) => set({ exit_condition })} />}
 
+        {draft.exit_condition && <>
+          <div className="form-row">
+            <label className="check">
+              <input type="checkbox" aria-label="Second exit on a condition" checked={!!draft.exit_condition_2} onChange={(e) => set(e.target.checked
+                ? { exit_condition_2: { type: 'cross', direction: draft.side === 'BUY' ? 'below' : 'above', a: { kind: 'close' }, b: defaultOperand('indicator') } }
+                : { exit_condition_2: null, exit_timeframe_2: null })} /> Exit remaining 50% on a second condition
+            </label>
+            {draft.exit_condition_2 && <label>Checked on<TimeframeSelect label="Exit 2 timeframe" blank="rule timeframe" value={draft.exit_timeframe_2} onChange={(exit_timeframe_2) => set({ exit_timeframe_2 })} /></label>}
+          </div>
+          {draft.exit_condition_2 && <ConditionEditor path="x2" cond={draft.exit_condition_2} drawings={drawings} onChange={(exit_condition_2) => set({ exit_condition_2 })} />}
+        </>}
+
         <div className="form-row">
           <label className="check"><input type="checkbox" checked={draft.once} onChange={(e) => set({ once: e.target.checked })} /> Fire once, then switch off</label>
           <label className="check"><input type="checkbox" checked={draft.enabled} onChange={(e) => set({ enabled: e.target.checked })} /> Enabled</label>
         </div>
 
         <p className="preview" data-testid="rule-preview">
-          {draft.side === 'BUY' ? 'Buy' : 'Sell'} {draft.quantity} {shortSymbol(draft.symbol)} on the {draft.timeframe} chart when {describeCondition(draft.condition, drawings)}; {describeStop(draft.stop, drawings)}, {describeTarget(draft.target)}{draft.trail ? `; ${describeTrail(draft.trail, drawings)}` : ''}{draft.exit_condition ? `; ${describeExit(draft.exit_condition, draft.exit_timeframe, drawings)}` : ''}.
+          {draft.side === 'BUY' ? 'Buy' : 'Sell'} {draft.quantity} {shortSymbol(draft.symbol)} on the {draft.timeframe} chart when {describeCondition(draft.condition, drawings)}; {describeStop(draft.stop, drawings)}, {describeTarget(draft.target)}{draft.trail ? `; ${describeTrail(draft.trail, drawings)}` : ''}{draft.exit_condition ? `; exit 50% when ${describeCondition(draft.exit_condition, drawings)}${draft.exit_timeframe ? ` on ${draft.exit_timeframe}` : ''}` : ''}{draft.exit_condition_2 ? `; exit remaining 50% when ${describeCondition(draft.exit_condition_2, drawings)}${draft.exit_timeframe_2 ? ` on ${draft.exit_timeframe_2}` : ''}` : ''}.
         </p>
         {errors.length > 0 && <ul className="errors" role="alert">{errors.map((e) => <li key={e}>{e}</li>)}</ul>}
 
