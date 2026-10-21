@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { Preset, ScreenColumn, ScreenFilter, ScreenResult, ScreenRow } from '../api/types'
+import type { Preset, QuickCondition, SavedScreen, ScreenColumn, ScreenFilter, ScreenResult, ScreenRow } from '../api/types'
 import { fmtCrore, fmtPct, fmtPrice, shortSymbol, sign } from '../lib/format'
 import { useApp, useSel } from '../components/context'
 
@@ -26,6 +26,9 @@ export function ScreenerView() {
   const [presets, setPresets] = useState<Preset[]>([])
   const [columns, setColumns] = useState<ScreenColumn[]>([])
   const [operators, setOperators] = useState<string[]>(['>', '>=', '<', '<=', '=', '!='])
+  const [groupsOrder, setGroupsOrder] = useState<string[]>([])
+  const [quick, setQuick] = useState<QuickCondition[]>([])
+  const [saved, setSaved] = useState<SavedScreen[]>([])
   const [active, setActive] = useState<string | 'custom'>('uptrend')
   const [filters, setFilters] = useState<ScreenFilter[]>([blankFilter()])
   const [sort, setSort] = useState<Sort>({ field: 'ret_60d', descending: true })
@@ -45,11 +48,14 @@ export function ScreenerView() {
     let live = true
     void (async () => {
       try {
-        const [p, c] = await Promise.all([api.presets(), api.columns()])
+        const [p, c, sv] = await Promise.all([api.presets(), api.columns(), api.savedScreens().catch(() => [] as SavedScreen[])])
         if (!live) return
         setPresets(p)
         setColumns(c.columns)
         setOperators(c.operators)
+        setGroupsOrder(c.groups ?? [])
+        setQuick(c.quick ?? [])
+        setSaved(sv)
         const first = p.find((x) => x.name === 'uptrend') ?? p[0]
         if (first) { setActive(first.name); setSort({ field: first.sort, descending: first.descending }); setResult(await api.runPreset(first.name)) }
       } catch (e) { if (live) setError(e instanceof Error ? e.message : String(e)) }
@@ -97,6 +103,32 @@ export function ScreenerView() {
     return list
   }, [result, sort])
 
+  const editPreset = (p: Preset) => { setFilters(p.filters.map((f) => ({ ...f }))); setSort({ field: p.sort, descending: p.descending }); setActive('custom') }
+  const loadSaved = (sc: SavedScreen) => {
+    setFilters(sc.filters.map((f) => ({ ...f }))); setSort({ field: sc.sort, descending: sc.descending }); setActive('custom')
+    return run(() => api.runScreen(sc.filters, sc.sort, sc.descending))
+  }
+  const saveCurrent = async () => {
+    const name = window.prompt('Name for this screen', '')
+    if (!name) return
+    try {
+      const sc = await api.saveScreen(name, filters, sort.field, sort.descending)
+      setSaved((all) => [...all.filter((x) => x.id !== sc.id), sc].sort((a, b) => a.name.localeCompare(b.name)))
+      ctl.notify('success', `Saved the screen “${sc.name}”.`)
+    } catch (e) { setError(e instanceof Error ? e.message : String(e)) }
+  }
+  const removeSaved = async (sc: SavedScreen) => {
+    if (!window.confirm(`Delete the saved screen “${sc.name}”?`)) return
+    try { await api.deleteScreen(sc.id); setSaved((all) => all.filter((x) => x.id !== sc.id)) } catch (e) { setError(e instanceof Error ? e.message : String(e)) }
+  }
+  const labelOf = (key: string) => columns.find((c) => c.name === key)?.label ?? key
+  const describe = (f: ScreenFilter) => `${labelOf(f.field)} ${f.op} ${typeof f.value === 'number' ? f.value : labelOf(f.value.field)}`
+  // the field picker, grouped (Price, Trend, Momentum… then Valuation, Profitability…)
+  const grouped = (groupsOrder.length ? groupsOrder : [...new Set(columns.map((c) => c.group ?? 'Other'))])
+    .map((g) => ({ g, cols: columns.filter((c) => (c.group ?? 'Other') === g) })).filter((x) => x.cols.length)
+  const fieldOptions = grouped.map(({ g, cols }) => (
+    <optgroup key={g} label={`${cols[0]?.technical === false ? 'Fundamental' : 'Technical'} · ${g}`}>{cols.map((c) => <option key={c.name} value={c.name}>{c.label}</option>)}</optgroup>
+  ))
   const toggleSort = (field: string) => setSort((s) => (s.field === field ? { field, descending: !s.descending } : { field, descending: true }))
   const patchFilter = (i: number, patch: Partial<ScreenFilter>) => setFilters((fs) => fs.map((f, j) => (j === i ? { ...f, ...patch } : f)))
   const inList = (symbol: string) => activeList?.symbols.includes(symbol) ?? false
@@ -124,7 +156,15 @@ export function ScreenerView() {
               {presets.filter((p) => (p.group ?? 'Screens') === g).map((p) => <button key={p.name} className={active === p.name ? 'chip active' : 'chip'} title={p.description} onClick={() => void runPreset(p.name)}>{p.label}</button>)}
             </div>
           ))}
-          <div className="preset-group"><span className="muted">Your own</span><button className={active === 'custom' ? 'chip active' : 'chip'} onClick={() => setActive('custom')}>Custom…</button></div>
+          <div className="preset-group"><span className="muted">Your own</span>
+            {saved.map((sc) => (
+              <span key={sc.id} className="chip tag saved-screen" title={sc.filters.map(describe).join(' AND ')}>
+                <button onClick={() => void loadSaved(sc)}>{sc.name}</button>
+                <button aria-label={`Delete saved screen ${sc.name}`} onClick={() => void removeSaved(sc)}>×</button>
+              </span>
+            ))}
+            <button className={active === 'custom' ? 'chip active' : 'chip'} onClick={() => setActive('custom')}>Custom…</button>
+          </div>
         </div>
         <div className="scan">
           <span className="muted">{result?.run_date ? `Daily scan of ${result.run_date}` : 'No scan has been run yet'}</span>
@@ -132,27 +172,42 @@ export function ScreenerView() {
         </div>
       </div>
 
-      {current && active !== 'custom' && <p className="muted desc">{current.description}</p>}
+      {current && active !== 'custom' && (
+        <p className="muted desc">{current.description}{' '}
+          <button className="small" title="Load this screen's conditions into the builder, then add or remove technical and fundamental conditions" onClick={() => editPreset(current)}>Edit in builder</button>
+        </p>
+      )}
 
       {active === 'custom' && (
         <div className="filters" aria-label="Custom screen">
           {filters.map((f, i) => (
             <div className="filter" key={i}>
               <select aria-label={`Filter ${i + 1} field`} value={f.field} onChange={(e) => patchFilter(i, { field: e.target.value })}>
-                {columns.map((c) => <option key={c.name} value={c.name}>{c.label}</option>)}
+                {fieldOptions}
               </select>
               <select aria-label={`Filter ${i + 1} operator`} value={f.op} onChange={(e) => patchFilter(i, { op: e.target.value })}>{operators.map((o) => <option key={o}>{o}</option>)}</select>
               <select aria-label={`Filter ${i + 1} compares to`} value={typeof f.value === 'number' ? '#' : f.value.field} onChange={(e) => patchFilter(i, { value: e.target.value === '#' ? 0 : { field: e.target.value } })}>
                 <option value="#">a number</option>
-                {columns.map((c) => <option key={c.name} value={c.name}>{c.label}</option>)}
+                {fieldOptions}
               </select>
               {typeof f.value === 'number' && <input aria-label={`Filter ${i + 1} value`} type="number" step="any" value={f.value} onChange={(e) => patchFilter(i, { value: Number(e.target.value) })} />}
               <button className="x" aria-label={`Remove filter ${i + 1}`} onClick={() => setFilters((fs) => fs.filter((_, j) => j !== i))}>×</button>
             </div>
           ))}
+          {filters.length > 0 && <p className="muted screen-summary">All of: {filters.map(describe).join(' · AND · ')}</p>}
+          {quick.length > 0 && (['technical', 'fundamental'] as const).map((kind) => (
+            <div key={kind} className="quick-row" aria-label={`Add a ${kind} condition`}>
+              <span className="muted">{kind === 'technical' ? 'Technical' : 'Fundamental'}:</span>
+              {quick.filter((q) => q.kind === kind).map((q) => (
+                <button key={q.label} className="chip" title={q.filters.map(describe).join(' AND ')} onClick={() => setFilters((fs) => [...fs, ...q.filters.map((x) => ({ ...x }))])}>+ {q.label}</button>
+              ))}
+            </div>
+          ))}
           <div className="filter-actions">
             <button className="small" onClick={() => setFilters((fs) => [...fs, blankFilter()])}>+ filter</button>
+            <button className="small" onClick={() => setFilters([])} disabled={filters.length === 0}>Clear</button>
             <button className="small primary" onClick={() => void runCustom()} disabled={busy !== null || filters.length === 0}>Run screen</button>
+            <button className="small" onClick={() => void saveCurrent()} disabled={filters.length === 0}>Save screen…</button>
           </div>
         </div>
       )}

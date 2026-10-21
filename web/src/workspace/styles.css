@@ -319,3 +319,8 @@ table.triggers-table th, table.triggers-table td { text-align:left; vertical-ali
 .approval-actions { display:flex; align-items:center; gap:10px; margin-top:4px; }
 .workspace button.approval-badge { background:#3a2c0b; color:var(--amber); border:1px solid #6b5210; border-radius:4px; padding:2px 8px; font-size:12px; font-weight:700; }
 .approval-toggle { display:inline-flex; align-items:center; gap:4px; font-size:12px; color:var(--muted); }
+
+/* screener builder */
+.quick-row { display:flex; flex-wrap:wrap; align-items:center; gap:4px 6px; margin:4px 0; }
+.screen-summary { margin:4px 0; font-size:12px; }
+.saved-screen button { font-size:12px; }

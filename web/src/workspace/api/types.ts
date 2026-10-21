@@ -265,7 +265,9 @@ export type ScreenFilter = { field: string; op: string; value: number | { field:
 export type ScreenRow = { symbol: string; name: string | null; sector: string | null; market_cap: number | null; asof: string | null } & Record<string, number | string | null>
 export type ScreenResult = { run_date: string | null; count: number; rows: ScreenRow[]; preset?: string }
 export type Preset = { name: string; label: string; description: string; filters: ScreenFilter[]; sort: string; descending: boolean; group?: string; show?: string[] }
-export type ScreenColumn = { name: string; label: string; unit?: string; short?: string }
+export type ScreenColumn = { name: string; label: string; unit?: string; short?: string; group?: string; technical?: boolean }
+export type QuickCondition = { label: string; kind: 'technical' | 'fundamental'; filters: ScreenFilter[] }
+export type SavedScreen = { id: string; name: string; filters: ScreenFilter[]; sort: string; descending: boolean }
 
 // ---- strategy-screener -> watchlist ---------------------------------------
 export type SyncFilter = { source: 'ratio' | 'quarter' | 'year'; metric: string; op: '>' | '>=' | '<' | '<='; value: number; on_missing?: 'keep' | 'drop' }

@@ -194,3 +194,22 @@ describe('ScreenerView', () => {
     })
   })
 })
+
+describe('ScreenerView builder', () => {
+  it('mixes one-click technical and fundamental conditions, edits a preset and saves the screen', async () => {
+    const { fireEvent, screen: s } = await import('@testing-library/react')
+    const { makeApp, renderIn } = await import('../components/testharness')
+    const { ScreenerView } = await import('./ScreenerView')
+    const app = makeApp()
+    renderIn(<ScreenerView />, app)
+    fireEvent.click(await s.findByText('Edit in builder'))
+    fireEvent.click(await s.findByText('+ Close above SMA 200'))
+    fireEvent.click(s.getByText('+ ROCE above 15%'))
+    expect(s.getByText(/All of: .*Last close > SMA 200 · AND · ROCE, % > 15/)).toBeInTheDocument()
+    window.prompt = () => 'Trend + quality'
+    fireEvent.click(s.getByText('Save screen…'))
+    await new Promise((r) => setTimeout(r, 0))
+    expect(app.api.saveScreen).toHaveBeenCalledWith('Trend + quality', expect.arrayContaining([{ field: 'roce_pct', op: '>', value: 15 }]), expect.any(String), expect.any(Boolean))
+    expect(await s.findByText('Trend + quality')).toBeInTheDocument()
+  })
+})

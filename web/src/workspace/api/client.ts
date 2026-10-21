@@ -1,5 +1,5 @@
 import type {
-  AccountLimits, Approval, BacktestFull, BrokerQuote, BrokerStatus, LiveOrder, LivePosition, LiveSettings, WatchRule, DataOverview, Funds, OrderPreview, OrderPreviewRequest, ProductChoice, ScreenColumn, BacktestRequest, BacktestRow, Candle, Drawing, Financials, NewDrawing, Position, Preset, RecentResult, Rule, RuleDraft, ScreenFilter, ScreenResult,
+  AccountLimits, Approval, BacktestFull, BrokerQuote, BrokerStatus, LiveOrder, LivePosition, LiveSettings, WatchRule, DataOverview, Funds, OrderPreview, OrderPreviewRequest, ProductChoice, ScreenColumn, BacktestRequest, BacktestRow, Candle, Drawing, Financials, NewDrawing, Position, Preset, QuickCondition, RecentResult, SavedScreen, Rule, RuleDraft, ScreenFilter, ScreenResult,
   SectorCompare, SectorGroup, ServerStatus, Signal, SymbolHit, SyncLink, SyncPlan, SyncResult, SyncSettings, SyncStrategy, Timeframe, Watchlist,
 } from './types'
 import { draftToPayload } from '../lib/rules'
@@ -109,7 +109,10 @@ export class ApiClient {
   compareSector = (p: { group?: string; sector?: string; limit?: number }) => this.request<SectorCompare>('GET', `/sectors/compare${this.qs(p)}`)
 
   presets = async () => (await this.request<{ presets: Preset[] }>('GET', '/screener/presets')).presets
-  columns = () => this.request<{ columns: ScreenColumn[]; operators: string[] }>('GET', '/screener/columns')
+  columns = () => this.request<{ columns: ScreenColumn[]; operators: string[]; groups?: string[]; quick?: QuickCondition[] }>('GET', '/screener/columns')
+  savedScreens = async () => (await this.request<{ screens: SavedScreen[] }>('GET', '/screener/saved')).screens
+  saveScreen = (name: string, filters: ScreenFilter[], sort: string, descending: boolean) => this.request<SavedScreen>('POST', '/screener/saved', { name, filters, sort, descending })
+  deleteScreen = (id: string) => this.request<{ deleted: string }>('DELETE', `/screener/saved/${id}`)
   runPreset = (name: string, limit = 200) => this.request<ScreenResult>('GET', `/screener/preset/${name}${this.qs({ limit })}`)
   runScreen = (filters: ScreenFilter[], sort: string, descending: boolean, limit = 200) =>
     this.request<ScreenResult>('POST', '/screener/run', { filters, sort, descending, limit })
