@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Approvals } from './Approvals'
 import { LiveOrders } from './LiveOrders'
 
 /** Every live order this app sent (ticket and rules), with the live switch, kill switch, cancel and move-stop. */
@@ -13,6 +14,7 @@ export function OrdersPanel() {
         </span>
         <small className="muted">Orders placed directly at the broker are not listed.</small>
       </div>
+      <Approvals />
       <LiveOrders days={days} />
     </div>
   )

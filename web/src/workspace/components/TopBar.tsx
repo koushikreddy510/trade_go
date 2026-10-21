@@ -3,6 +3,7 @@ import type { Funds } from '../api/types'
 import { fmtPrice } from '../lib/format'
 import { useApp, useSel } from './context'
 import { ThemeMenu } from './ThemeMenu'
+import { ApprovalBadge } from './Approvals'
 import type { View } from '../store/state'
 
 const NAV: { view: View; label: string }[] = [
@@ -32,6 +33,7 @@ export function TopBar() {
         ))}
       </nav>
       <div className="spacer" />
+      {server?.mode === 'flattrade' && <ApprovalBadge />}
       {server?.mode === 'flattrade' && <FundsChip />}
       {demo && <span className="badge demo" title="Prices are generated, not from a broker. Set TERMINAL_MODE=flattrade for live prices.">DEMO DATA</span>}
       <span className={`status ${live ? 'ok' : 'down'}`} role="status">

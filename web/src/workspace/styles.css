@@ -312,3 +312,10 @@ table.triggers-table th, table.triggers-table td { text-align:left; vertical-ali
 .trigger-rule { padding:2px 0 6px; border-bottom:1px dashed var(--line); }
 .trigger-rule:last-child { border-bottom:none; }
 .card-rules { padding:4px 0; }
+
+/* approvals */
+.approvals { padding:4px 10px 8px; display:flex; flex-direction:column; gap:6px; }
+.approval.pending { border:1px solid var(--amber); border-radius:6px; padding:8px 10px; }
+.approval-actions { display:flex; align-items:center; gap:10px; margin-top:4px; }
+.workspace button.approval-badge { background:#3a2c0b; color:var(--amber); border:1px solid #6b5210; border-radius:4px; padding:2px 8px; font-size:12px; font-weight:700; }
+.approval-toggle { display:inline-flex; align-items:center; gap:4px; font-size:12px; color:var(--muted); }

@@ -37,6 +37,10 @@ export function LiveOrders({ refreshKey = 0, symbol, product, days = 1 }: { refr
     if (!limits.live_enabled && !window.confirm('Turn ON live orders for Flattrade? Orders from the ticket will then be sent to the exchange with real money.')) return
     try { await api.setLiveSettings(ACCOUNT, { live_enabled: !limits.live_enabled }); await load() } catch (e) { setError(errorText(e)) }
   }
+  const setApproval = async (on: boolean) => {
+    if (!on && !window.confirm('Turn OFF approval? Live rules will then send real entries by themselves, with nobody approving each one.')) return
+    try { await api.setLiveSettings(ACCOUNT, { require_approval: on }); await load() } catch (e) { setError(errorText(e)) }
+  }
   const kill = async () => {
     try { await api.killSwitch(!settings?.kill_switch); await load() } catch (e) { setError(errorText(e)) }
   }
@@ -67,6 +71,10 @@ export function LiveOrders({ refreshKey = 0, symbol, product, days = 1 }: { refr
         </span>
         <small className="muted">max ₹{fmtPrice(limits.max_order_value, 0)} per order · {limits.max_orders_per_day} orders a day</small>
         <button className="small" onClick={() => void toggle()}>{limits.live_enabled ? 'Turn off' : 'Turn on'}</button>
+        <label className="approval-toggle" title="When on, a live rule's entry waits for you in Orders → Approvals">
+          <input type="checkbox" checked={limits.require_approval !== false} onChange={() => void setApproval(!(limits.require_approval !== false))} />
+          approval required{limits.require_approval !== false ? ` (${limits.approval_minutes ?? 5} min)` : ''}
+        </label>
         <button className={settings.kill_switch ? 'small' : 'small danger'} onClick={() => void kill()}>{settings.kill_switch ? 'Release kill switch' : 'Kill switch'}</button>
       </div>
       {error && <p className="ticket-error" role="alert">{error}</p>}

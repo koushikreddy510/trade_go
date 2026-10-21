@@ -1,5 +1,5 @@
 import type {
-  AccountLimits, BacktestFull, BrokerQuote, BrokerStatus, LiveOrder, LivePosition, LiveSettings, WatchRule, DataOverview, Funds, OrderPreview, OrderPreviewRequest, ProductChoice, ScreenColumn, BacktestRequest, BacktestRow, Candle, Drawing, Financials, NewDrawing, Position, Preset, RecentResult, Rule, RuleDraft, ScreenFilter, ScreenResult,
+  AccountLimits, Approval, BacktestFull, BrokerQuote, BrokerStatus, LiveOrder, LivePosition, LiveSettings, WatchRule, DataOverview, Funds, OrderPreview, OrderPreviewRequest, ProductChoice, ScreenColumn, BacktestRequest, BacktestRow, Candle, Drawing, Financials, NewDrawing, Position, Preset, RecentResult, Rule, RuleDraft, ScreenFilter, ScreenResult,
   SectorCompare, SectorGroup, ServerStatus, Signal, SymbolHit, SyncLink, SyncPlan, SyncResult, SyncSettings, SyncStrategy, Timeframe, Watchlist,
 } from './types'
 import { draftToPayload } from '../lib/rules'
@@ -56,6 +56,9 @@ export class ApiClient {
   /** Move an open stop-loss (a trailing step): the same broker order gets a new trigger. */
   moveStop = (id: string, trigger_price: number) => this.request<LiveOrder>('POST', `/orders/${id}/modify`, { trigger_price })
   cancelOrder = (id: string) => this.request<LiveOrder>('POST', `/orders/${id}/cancel`)
+  approvals = async (pending = false) => (await this.request<{ approvals: Approval[] }>('GET', `/approvals${this.qs({ pending: pending ? 'true' : undefined })}`)).approvals
+  /** A person's decision on a live rule's entry: approve sends the REAL order now. */
+  decideApproval = (id: string, approve: boolean) => this.request<Approval>('POST', `/approvals/${id}/${approve ? 'approve' : 'reject'}`)
   liveSettings = () => this.request<LiveSettings>('GET', '/live-settings')
   setLiveSettings = (account: string, body: Partial<AccountLimits>) => this.request<AccountLimits>('PUT', `/live-settings/${account}`, body)
   killSwitch = (on: boolean) => this.request<{ kill_switch: boolean }>('POST', '/kill-switch', { on })

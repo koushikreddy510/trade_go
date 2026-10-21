@@ -167,7 +167,12 @@ export type WatchRule = {
   plan?: WatchPlan; rule: Rule; live: number | null; session_open: boolean; last_candle: number | null; next_check: number | null; entry: WatchPart
   positions: (Position & { exits: WatchPart[]; live_link: { state: string; note: string | null; last_stop: number | null } | null })[]
 }
-export type AccountLimits = { live_enabled: boolean; max_order_value: number; max_orders_per_day: number }
+export type AccountLimits = { live_enabled: boolean; max_order_value: number; max_orders_per_day: number; require_approval?: boolean; approval_minutes?: number }
+export type Approval = {
+  id: string; position_id: string; rule_id: string | null; rule_name: string | null; account: string; product: string; symbol: string
+  side: 'BUY' | 'SELL'; quantity: number; signal_price: number | null; stop: number | null; target: number | null; reason: string | null
+  status: 'pending' | 'approved' | 'rejected' | 'expired' | 'failed'; note: string | null; created_at: string; expires_at: string; decided_at: string | null
+}
 export type LiveSettings = { kill_switch: boolean; accounts: Record<string, AccountLimits> }
 export type Funds = { cash: number; payin: number; collateral: number; margin_used: number; available: number; payout: number; blocked: number; commodity?: number | null }
 export type BrokerQuote = {
