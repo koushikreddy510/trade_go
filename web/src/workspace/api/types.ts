@@ -140,6 +140,26 @@ export type Position = {
 export type Watchlist = { id: string; name: string; symbols: string[] }
 export type SymbolHit = { symbol: string; exchange: string; name: string; sector: string }
 
+// ---- broker account (read-only: funds, quote, order preview) --------------
+export type Funds = { cash: number; payin: number; collateral: number; margin_used: number; available: number; payout: number; blocked: number }
+export type BrokerQuote = {
+  symbol: string; ltp: number | null; prev_close: number | null; change: number | null; change_pct: number | null
+  open: number | null; high: number | null; low: number | null
+  bid: number | null; bid_qty: number | null; ask: number | null; ask_qty: number | null
+  upper_circuit: number | null; lower_circuit: number | null; volume: number | null; oi: number | null
+  lot_size: number; tick_size: number | null; expiry: string | null; instrument: string | null
+  point_value: number; quantity_unit: 'shares' | 'lots'
+}
+export type ProductChoice = { prd: string; name: string }
+export type OrderPreviewRequest = { symbol: string; side: 'BUY' | 'SELL'; quantity: number; product?: string; price_type?: 'LMT' | 'MKT'; price?: number }
+export type OrderPreview = {
+  symbol: string; side: 'BUY' | 'SELL'; product: string; product_name: string; price_type: 'LMT' | 'MKT'; price: number
+  quantity: number; units: number; quantity_unit: 'shares' | 'lots'; lot_size: number
+  contract_value: number; margin_required: number; available: number; shortfall: number; broker_remarks: string
+  existing_position: { net_quantity: number; product: string; avg_price: number | null } | null
+  quote: BrokerQuote; preview_only: true
+}
+
 // ---- financials ---------------------------------------------------------
 export type FinancialRow = {
   period: string

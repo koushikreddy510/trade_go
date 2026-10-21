@@ -1,5 +1,5 @@
 import type {
-  BacktestFull, DataOverview, ScreenColumn, BacktestRequest, BacktestRow, Candle, Drawing, Financials, NewDrawing, Position, Preset, RecentResult, Rule, RuleDraft, ScreenFilter, ScreenResult,
+  BacktestFull, BrokerQuote, DataOverview, Funds, OrderPreview, OrderPreviewRequest, ProductChoice, ScreenColumn, BacktestRequest, BacktestRow, Candle, Drawing, Financials, NewDrawing, Position, Preset, RecentResult, Rule, RuleDraft, ScreenFilter, ScreenResult,
   SectorCompare, SectorGroup, ServerStatus, Signal, SymbolHit, SyncLink, SyncPlan, SyncResult, SyncSettings, SyncStrategy, Timeframe, Watchlist,
 } from './types'
 import { draftToPayload } from '../lib/rules'
@@ -44,6 +44,11 @@ export class ApiClient {
   }
 
   status = () => this.request<ServerStatus>('GET', '/status')
+  funds = () => this.request<Funds>('GET', '/account/funds')
+  products = () => this.request<Record<string, ProductChoice[]>>('GET', '/account/products')
+  quote = (symbol: string) => this.request<BrokerQuote>('GET', `/quote${this.qs({ symbol })}`)
+  /** What an order would cost (margin, value, funds left). Calculates only: nothing is sent to the exchange. */
+  orderPreview = (req: OrderPreviewRequest) => this.request<OrderPreview>('POST', '/order-preview', req)
   searchSymbols = async (q: string) => (await this.request<{ results: SymbolHit[] }>('GET', `/symbols/search${this.qs({ q })}`)).results
   candles = (symbol: string, timeframe: Timeframe, limit = 500) =>
     this.request<{ symbol: string; timeframe: Timeframe; forming: boolean; candles: Candle[] }>('GET', `/candles${this.qs({ symbol, timeframe, limit })}`)

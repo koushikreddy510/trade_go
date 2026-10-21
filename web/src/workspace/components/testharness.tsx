@@ -144,6 +144,18 @@ export function makeApp(over: Record<string, unknown> = {}, initial: Partial<App
     closePosition: vi.fn(async (id: string) => position({ id, status: 'closed', exit_reason: 'manual', exit_price: 104, realized_pnl: 40 })),
     financials: vi.fn(async (symbol: string) => ({ ...financials({ available: false, company: '', quarterly: [], annual: [], ratios: {}, announcements: [] }), symbol })),
     searchSymbols: vi.fn(async () => [] as { symbol: string; exchange: string; name: string; sector: string }[]),
+    funds: vi.fn(async () => ({ cash: 15000, payin: 0, collateral: 0, margin_used: 0, available: 15000, payout: 0, blocked: 0 })),
+    products: vi.fn(async () => ({ MCX: [{ prd: 'M', name: 'NRML' }, { prd: 'I', name: 'MIS' }], NSE: [{ prd: 'C', name: 'CNC' }, { prd: 'I', name: 'MIS' }] })),
+    quote: vi.fn(async (symbol: string) => ({
+      symbol, ltp: 211200, prev_close: 213900, change: -2700, change_pct: -1.26, open: 213000, high: 213500, low: 211000,
+      bid: 211190, bid_qty: 3, ask: 211210, ask_qty: 5, upper_circuit: 222000, lower_circuit: 205000, volume: 23384, oi: 1200,
+      lot_size: 5, tick_size: 1, expiry: '30-NOV-2026', instrument: 'FUTCOM', point_value: 5, quantity_unit: 'lots' as const,
+    })),
+    orderPreview: vi.fn(async (req: { symbol: string; side: 'BUY' | 'SELL'; quantity: number }) => ({
+      ...req, product: 'M', product_name: 'NRML', price_type: 'LMT' as const, price: 211200, units: req.quantity * 5, quantity_unit: 'lots' as const,
+      lot_size: 5, contract_value: 211200 * 5 * req.quantity, margin_required: 30259.8 * req.quantity, available: 15000,
+      shortfall: Math.max(0, 30259.8 * req.quantity - 15000), broker_remarks: 'Insufficient Balance', existing_position: null, quote: null, preview_only: true as const,
+    })),
     presets: vi.fn(async () => [preset('uptrend'), preset('oversold', { sort: 'rsi_14', descending: false })]),
     columns: vi.fn(async () => ({ columns: [{ name: 'rsi_14', label: 'RSI 14' }, { name: 'close', label: 'Last close' }, { name: 'sma_200', label: 'SMA 200' }], operators: ['>', '>=', '<', '<=', '=', '!='] })),
     runPreset: vi.fn(async () => screen([screenRow(SBIN), screenRow(TCS, { change_pct: -1 })])),

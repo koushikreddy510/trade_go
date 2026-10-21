@@ -28,6 +28,11 @@ describe('TopBar', () => {
     expect(screen.queryByText('DEMO DATA')).not.toBeInTheDocument()
   })
 
+  it('shows the funds available in the broker account with the real broker feed', async () => {
+    renderIn(<TopBar />, makeApp({}, { server: server('flattrade') }))
+    expect(await screen.findByText('₹15,000.00')).toBeInTheDocument()
+  })
+
   it('reports live only when the socket is open and the broker feed is connected', () => {
     renderIn(<TopBar />, makeApp({}, { connection: 'open', feed: 'connected' }))
     expect(screen.getByRole('status')).toHaveTextContent('Live')

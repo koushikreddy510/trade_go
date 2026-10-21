@@ -215,3 +215,16 @@ table.compare tr.median th, table.compare tr.median td { color:var(--muted); fon
 .trigger-row:hover { background:var(--hover); }
 .trigger-label { max-width:90px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--muted); font-size:11px; }
 .count-label { color:var(--muted); font-size:11px; }
+
+/* funds chip + order ticket (preview only) */
+.funds { display:flex; align-items:baseline; gap:6px; } .funds small { color:var(--muted); }
+.badge.preview { border:1px solid var(--line); color:var(--muted); border-radius:4px; padding:1px 7px; font-size:11px; font-weight:700; }
+.ticket-ltp { font-size:18px; font-weight:700; }
+.ticket-form { display:flex; flex-wrap:wrap; align-items:flex-end; gap:10px 14px; padding:6px 10px; }
+.ticket-form label { display:flex; flex-direction:column; gap:3px; font-size:12px; color:var(--muted); }
+.ticket-form input, .ticket-form select { width:110px; }
+.chip.active.sell { background:var(--down) !important; border-color:var(--down) !important; }
+.ticket-result { display:flex; flex-wrap:wrap; gap:6px 22px; padding:6px 10px 10px; align-items:baseline; }
+.ticket-result small { color:var(--muted); margin-right:6px; }
+.ticket-error { color:var(--down); padding:0 10px; }
+.ticket-warn { flex-basis:100%; color:var(--amber); margin:4px 0 0; }
