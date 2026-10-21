@@ -23,6 +23,13 @@ describe('RuleWatch', () => {
     expect(screen.getByText(/next check 2:0\d/)).toBeInTheDocument()
   })
 
+  it('does not call an old cross close', async () => {
+    const app = makeApp()
+    app.api.rulesWatch.mockResolvedValue([{ ...ROW, entry: { ...ROW.entry, state: 'crossed_earlier', distance: null, distance_pct: null, on_trigger_side: false } }])
+    renderIn(<RuleWatch />, app)
+    expect(await screen.findByText(/crossed earlier/)).toBeInTheDocument()
+  })
+
   it('says how far a condition still has to move', async () => {
     const app = makeApp()
     app.api.rulesWatch.mockResolvedValue([{ ...ROW, entry: { ...ROW.entry, a_live: null, distance: 2, distance_pct: 0.014, on_trigger_side: false } }])

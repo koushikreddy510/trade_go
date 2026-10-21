@@ -160,7 +160,7 @@ export type LivePosition = {
 }
 export type WatchPart = {
   type: string; label?: string; met: boolean; distance_pct?: number | null; distance?: number; a?: number; b?: number; a_live?: number | null
-  side?: 'above' | 'below'; on_trigger_side?: boolean; children?: WatchPart[]; level?: number; timeframe?: string
+  side?: 'above' | 'below'; on_trigger_side?: boolean; state?: 'crossed_earlier'; children?: WatchPart[]; level?: number; timeframe?: string
 }
 export type WatchRule = {
   rule: Rule; live: number | null; session_open: boolean; last_candle: number | null; next_check: number | null; entry: WatchPart

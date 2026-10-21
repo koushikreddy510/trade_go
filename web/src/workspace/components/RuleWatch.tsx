@@ -28,7 +28,8 @@ function Part({ p, depth = 0 }: { p: WatchPart; depth?: number }) {
     <div className="watch-line" style={{ marginLeft: depth * 14 }}>
       <span className={p.met ? 'up' : p.on_trigger_side ? 'amber' : 'muted'}>{p.met ? '✓' : '○'}</span> {p.label}
       {p.a !== undefined && <small className="muted"> · now {num(p.a_live ?? p.a)} vs {num(p.b)}</small>}
-      {!p.met && p.distance !== undefined && p.distance_pct !== null && p.distance_pct !== undefined && (
+      {p.state === 'crossed_earlier' && <small className="muted"> · crossed earlier; waits for price to go back and cross again</small>}
+      {!p.met && p.distance !== undefined && p.distance !== null && p.distance_pct !== null && p.distance_pct !== undefined && (
         <small className={p.on_trigger_side ? 'amber' : ''}>
           {p.on_trigger_side ? ' · on the trigger side now, waiting for the candle to close' : ` · needs ${p.side === 'below' ? '−' : '+'}${num(Math.abs(p.distance))} (${p.distance_pct.toFixed(2)}%)`}
         </small>
