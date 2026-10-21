@@ -26,7 +26,7 @@ describe('TriggersPanel', () => {
     expect(await screen.findByText('Sell 2')).toBeInTheDocument()
     expect(screen.getByText('LIVE Intraday')).toBeInTheDocument()
     expect(screen.getByText(/line used for entry/)).toBeInTheDocument()
-    expect(screen.getByText(/stop: signal candle high \+ 0.05% \(≈ 14,553.27 if it fired now\)/)).toBeInTheDocument()
+    expect(screen.getByText(/signal candle high \+ 0.05% \(≈ 14,553.27 if it fired now\)/)).toBeInTheDocument()
     expect(screen.getByText(/waiting · 0.06% away/)).toBeInTheDocument()
     expect(screen.getByText('Drawing only: no rule acts on this line.')).toBeInTheDocument()
   })
