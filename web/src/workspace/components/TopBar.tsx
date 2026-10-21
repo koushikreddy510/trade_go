@@ -61,6 +61,7 @@ function FundsChip() {
   return (
     <span className="funds" title={`Cash ₹${fmtPrice(funds.cash)} · pay-in ₹${fmtPrice(funds.payin)} · collateral ₹${fmtPrice(funds.collateral)} · margin used ₹${fmtPrice(funds.margin_used)}`}>
       <small>Funds</small> <b>₹{fmtPrice(funds.available)}</b>
+      {funds.commodity !== undefined && funds.commodity !== null && <><small>MCX</small> <b className={funds.commodity > 0 ? '' : 'down'}>₹{fmtPrice(funds.commodity)}</b></>}
     </span>
   )
 }

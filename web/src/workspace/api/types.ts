@@ -158,7 +158,7 @@ export type LivePosition = {
 }
 export type AccountLimits = { live_enabled: boolean; max_order_value: number; max_orders_per_day: number }
 export type LiveSettings = { kill_switch: boolean; accounts: Record<string, AccountLimits> }
-export type Funds = { cash: number; payin: number; collateral: number; margin_used: number; available: number; payout: number; blocked: number }
+export type Funds = { cash: number; payin: number; collateral: number; margin_used: number; available: number; payout: number; blocked: number; commodity?: number | null }
 export type BrokerQuote = {
   symbol: string; ltp: number | null; prev_close: number | null; change: number | null; change_pct: number | null
   open: number | null; high: number | null; low: number | null
