@@ -1,5 +1,5 @@
 import type {
-  BacktestFull, BrokerQuote, DataOverview, Funds, OrderPreview, OrderPreviewRequest, ProductChoice, ScreenColumn, BacktestRequest, BacktestRow, Candle, Drawing, Financials, NewDrawing, Position, Preset, RecentResult, Rule, RuleDraft, ScreenFilter, ScreenResult,
+  BacktestFull, BrokerQuote, BrokerStatus, DataOverview, Funds, OrderPreview, OrderPreviewRequest, ProductChoice, ScreenColumn, BacktestRequest, BacktestRow, Candle, Drawing, Financials, NewDrawing, Position, Preset, RecentResult, Rule, RuleDraft, ScreenFilter, ScreenResult,
   SectorCompare, SectorGroup, ServerStatus, Signal, SymbolHit, SyncLink, SyncPlan, SyncResult, SyncSettings, SyncStrategy, Timeframe, Watchlist,
 } from './types'
 import { draftToPayload } from '../lib/rules'
@@ -44,6 +44,9 @@ export class ApiClient {
   }
 
   status = () => this.request<ServerStatus>('GET', '/status')
+  brokers = async () => (await this.request<{ brokers: BrokerStatus[] }>('GET', '/brokers')).brokers
+  /** Log in now: unattended when `code` is left out, else with the URL the broker's login page redirected to. */
+  brokerLogin = (broker: string, code?: string) => this.request<{ broker: string; source: string; obtained_at: string }>('POST', `/brokers/${broker}/login`, code ? { code } : {})
   funds = () => this.request<Funds>('GET', '/account/funds')
   products = () => this.request<Record<string, ProductChoice[]>>('GET', '/account/products')
   quote = (symbol: string) => this.request<BrokerQuote>('GET', `/quote${this.qs({ symbol })}`)

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { DataJobDef, DataOverview } from '../api/types'
+import { BrokerLogins } from '../components/BrokerLogins'
 import { useApp } from '../components/context'
 
 export const DATA_POLL_MS = 3000
@@ -59,6 +60,9 @@ export function DataView() {
             <Card label="Results announced" value={s?.results?.latest ?? '—'} sub={s?.results ? `${s.results.last_7_days} in the last 7 days · ${s.results.total} in all` : ''} />
           </div>
           {todo.length > 0 && <ul className="data-todo" aria-label="What needs attention">{todo.map((t) => <li key={t}>{t}</li>)}</ul>}
+
+          <h4>Broker logins</h4>
+          <BrokerLogins />
 
           <h4>Jobs</h4>
           {data.jobs_error && <p className="error" role="alert">Job status unavailable: {data.jobs_error}</p>}

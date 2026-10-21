@@ -141,6 +141,10 @@ export type Watchlist = { id: string; name: string; symbols: string[] }
 export type SymbolHit = { symbol: string; exchange: string; name: string; sector: string }
 
 // ---- broker account (read-only: funds, quote, order preview) --------------
+export type BrokerStatus = {
+  broker: 'flattrade' | 'paytm'; status: 'valid' | 'rejected' | 'unknown' | 'not_configured' | string; detail: string
+  auto_login: boolean; has_api_key: boolean; obtained_at: string | null; source: 'auto' | 'manual' | 'env' | null; login_url: string | null
+}
 export type Funds = { cash: number; payin: number; collateral: number; margin_used: number; available: number; payout: number; blocked: number }
 export type BrokerQuote = {
   symbol: string; ltp: number | null; prev_close: number | null; change: number | null; change_pct: number | null

@@ -144,6 +144,11 @@ export function makeApp(over: Record<string, unknown> = {}, initial: Partial<App
     closePosition: vi.fn(async (id: string) => position({ id, status: 'closed', exit_reason: 'manual', exit_price: 104, realized_pnl: 40 })),
     financials: vi.fn(async (symbol: string) => ({ ...financials({ available: false, company: '', quarterly: [], annual: [], ratios: {}, announcements: [] }), symbol })),
     searchSymbols: vi.fn(async () => [] as { symbol: string; exchange: string; name: string; sector: string }[]),
+    brokers: vi.fn(async () => [
+      { broker: 'flattrade' as const, status: 'rejected', detail: 'Session Expired', auto_login: true, has_api_key: true, obtained_at: '2026-10-20T02:15:00Z', source: 'auto' as const, login_url: 'https://auth.flattrade.in/?app_key=k' },
+      { broker: 'paytm' as const, status: 'not_configured', detail: '', auto_login: false, has_api_key: false, obtained_at: null, source: null, login_url: null },
+    ]),
+    brokerLogin: vi.fn(async (broker: string) => ({ broker, source: 'auto', obtained_at: '2026-10-21T02:15:00Z' })),
     funds: vi.fn(async () => ({ cash: 15000, payin: 0, collateral: 0, margin_used: 0, available: 15000, payout: 0, blocked: 0 })),
     products: vi.fn(async () => ({
       MCX: [{ prd: 'M', name: 'NRML', listed: true }, { prd: 'I', name: 'Intraday', listed: true }],

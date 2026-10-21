@@ -228,3 +228,8 @@ table.compare tr.median th, table.compare tr.median td { color:var(--muted); fon
 .ticket-result small { color:var(--muted); margin-right:6px; }
 .ticket-error { color:var(--down); padding:0 10px; }
 .ticket-warn { flex-basis:100%; color:var(--amber); margin:4px 0 0; }
+
+/* broker logins (Data view) */
+.broker-actions { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.broker-manual { display:inline-flex; flex-wrap:wrap; gap:6px; align-items:center; }
+.broker-manual input { width:260px; max-width:100%; }
