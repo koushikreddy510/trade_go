@@ -158,6 +158,7 @@ export function makeApp(over: Record<string, unknown> = {}, initial: Partial<App
       return order
     }),
     cancelOrder: vi.fn(async (id: string) => ({ id, status: 'cancelled' })),
+    moveStop: vi.fn(async (id: string, trigger_price: number) => ({ id, status: 'open', trigger_price })),
     setLiveSettings: vi.fn(async () => ({ live_enabled: true, max_order_value: 20000, max_orders_per_day: 20 })),
     killSwitch: vi.fn(async (on: boolean) => ({ kill_switch: on })),
     funds: vi.fn(async () => ({ cash: 15000, payin: 0, collateral: 0, margin_used: 0, available: 15000, payout: 0, blocked: 0 })),

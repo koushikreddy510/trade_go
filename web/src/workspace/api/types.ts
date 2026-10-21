@@ -149,6 +149,7 @@ export type LiveOrder = {
   id: string; account: string; symbol: string; side: 'BUY' | 'SELL'; quantity: number; units: number; product: string; price: number
   status: 'submitting' | 'open' | 'complete' | 'rejected' | 'cancelled' | 'failed'; broker_order_id: string | null
   filled_units: number; avg_price: number | null; message: string | null; source: string; created_at: string
+  trigger_price?: number | null; purpose?: string | null; link?: string | null
 }
 export type AccountLimits = { live_enabled: boolean; max_order_value: number; max_orders_per_day: number }
 export type LiveSettings = { kill_switch: boolean; accounts: Record<string, AccountLimits> }

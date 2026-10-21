@@ -8,11 +8,15 @@ const errorText = (e: unknown) => (e instanceof Error ? e.message : String(e))
 const OPEN = new Set(['submitting', 'open'])
 
 /** Live trading controls for the ticket: on/off and limits for the account, the kill switch, and today's orders. */
-export function LiveOrders({ refreshKey }: { refreshKey: number }) {
+export function LiveOrders({ refreshKey, symbol, product }: { refreshKey: number; symbol?: string; product?: string }) {
   const { api } = useApp()
   const [settings, setSettings] = useState<LiveSettings | null>(null)
   const [orders, setOrders] = useState<LiveOrder[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [stopSide, setStopSide] = useState<'SELL' | 'BUY'>('SELL')
+  const [stopQty, setStopQty] = useState(1)
+  const [stopTrigger, setStopTrigger] = useState('')
+  const [moves, setMoves] = useState<Record<string, string>>({})
   const load = useCallback(async () => {
     try {
       const [s, o] = await Promise.all([api.liveSettings(), api.liveOrders()])
@@ -40,6 +44,20 @@ export function LiveOrders({ refreshKey }: { refreshKey: number }) {
     try { await api.cancelOrder(id); await load() } catch (e) { setError(errorText(e)) }
   }
 
+  const protect = async () => {
+    if (!symbol || !product || !stopTrigger) return
+    if (!window.confirm(`Send a LIVE stop-loss?\n\n${stopSide} ${stopQty} ${shortSymbol(symbol)} if the price reaches ${stopTrigger}`)) return
+    try {
+      await api.placeOrder({ account: ACCOUNT, symbol, side: stopSide, quantity: stopQty, product, price_type: 'SL', trigger_price: Number(stopTrigger) })
+      setStopTrigger(''); await load()
+    } catch (e) { setError(errorText(e)) }
+  }
+  const move = async (o: LiveOrder) => {
+    const to = Number(moves[o.id])
+    if (!to || !window.confirm(`Move the LIVE stop for ${shortSymbol(o.symbol)} from ${o.trigger_price} to ${to}?`)) return
+    try { await api.moveStop(o.id, to); setMoves({ ...moves, [o.id]: '' }); await load() } catch (e) { setError(errorText(e)) }
+  }
+
   if (!settings || !limits) return error ? <p className="ticket-error">{error}</p> : null
   return (
     <div className="live-orders" aria-label="Live orders">
@@ -52,6 +70,15 @@ export function LiveOrders({ refreshKey }: { refreshKey: number }) {
         <button className={settings.kill_switch ? 'small' : 'small danger'} onClick={() => void kill()}>{settings.kill_switch ? 'Release kill switch' : 'Kill switch'}</button>
       </div>
       {error && <p className="ticket-error" role="alert">{error}</p>}
+      {symbol && product && (
+        <div className="stop-form" aria-label="Protect with a stop-loss">
+          <small className="muted">Protect with a stop-loss</small>
+          <select aria-label="Stop side" value={stopSide} onChange={(e) => setStopSide(e.target.value as 'SELL' | 'BUY')}><option value="SELL">Sell (protects a buy)</option><option value="BUY">Buy (protects a sell)</option></select>
+          <input aria-label="Stop quantity" type="number" min={1} step={1} value={stopQty} onChange={(e) => setStopQty(Math.max(1, Math.floor(Number(e.target.value) || 1)))} />
+          <input aria-label="Stop trigger" type="number" step={0.05} placeholder="trigger" value={stopTrigger} onChange={(e) => setStopTrigger(e.target.value)} />
+          <button className="small" disabled={!stopTrigger} onClick={() => void protect()}>Place stop</button>
+        </div>
+      )}
       {orders.length > 0 && (
         <table className="grid">
           <thead><tr><th>Time</th><th>Order</th><th>Price</th><th>Status</th><th /></tr></thead>
@@ -60,11 +87,19 @@ export function LiveOrders({ refreshKey }: { refreshKey: number }) {
               <tr key={o.id}>
                 <td>{new Date(o.created_at).toLocaleTimeString()}</td>
                 <td>{o.side} {o.quantity} {shortSymbol(o.symbol)} <small className="muted">{o.product === 'I' ? 'Intraday' : o.product === 'F' ? 'MTF' : 'NRML'}</small></td>
-                <td>{fmtPrice(o.price)}{o.avg_price ? <small className="muted"> filled {fmtPrice(o.avg_price)}</small> : null}</td>
+                <td>{o.trigger_price ? <>stop {fmtPrice(o.trigger_price)} <small className="muted">lmt {fmtPrice(o.price)}</small></> : fmtPrice(o.price)}{o.avg_price ? <small className="muted"> filled {fmtPrice(o.avg_price)}</small> : null}</td>
                 <td className={o.status === 'complete' ? 'up' : o.status === 'rejected' || o.status === 'failed' ? 'down' : ''} title={o.message ?? ''}>
                   {o.status}{o.filled_units && o.status !== 'complete' ? ` (${o.filled_units} filled)` : ''}{o.message ? ` · ${o.message}` : ''}
                 </td>
-                <td>{OPEN.has(o.status) && o.broker_order_id && <button className="small danger" onClick={() => void cancel(o.id)}>Cancel</button>}</td>
+                <td className="order-actions">
+                  {OPEN.has(o.status) && o.trigger_price && o.broker_order_id && (
+                    <span className="move-stop">
+                      <input aria-label={`Move stop ${o.id}`} type="number" step={0.05} placeholder="new stop" value={moves[o.id] ?? ''} onChange={(e) => setMoves({ ...moves, [o.id]: e.target.value })} />
+                      <button className="small" disabled={!moves[o.id]} onClick={() => void move(o)}>Move</button>
+                    </span>
+                  )}
+                  {OPEN.has(o.status) && o.broker_order_id && <button className="small danger" onClick={() => void cancel(o.id)}>Cancel</button>}
+                </td>
               </tr>
             ))}
           </tbody>

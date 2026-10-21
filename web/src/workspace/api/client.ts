@@ -49,7 +49,10 @@ export class ApiClient {
   brokerLogin = (broker: string, code?: string) => this.request<{ broker: string; source: string; obtained_at: string }>('POST', `/brokers/${broker}/login`, code ? { code } : {})
   liveOrders = async () => (await this.request<{ orders: LiveOrder[] }>('GET', '/orders')).orders
   /** Sends a REAL order (after the server's checks). */
-  placeOrder = (req: OrderPreviewRequest & { account: string; product: string }) => this.request<LiveOrder>('POST', '/orders', { ...req, confirm: true })
+  placeOrder = (req: Omit<OrderPreviewRequest, 'price_type'> & { account: string; product: string; price_type?: 'LMT' | 'MKT' | 'SL'; trigger_price?: number }) =>
+    this.request<LiveOrder>('POST', '/orders', { ...req, confirm: true })
+  /** Move an open stop-loss (a trailing step): the same broker order gets a new trigger. */
+  moveStop = (id: string, trigger_price: number) => this.request<LiveOrder>('POST', `/orders/${id}/modify`, { trigger_price })
   cancelOrder = (id: string) => this.request<LiveOrder>('POST', `/orders/${id}/cancel`)
   liveSettings = () => this.request<LiveSettings>('GET', '/live-settings')
   setLiveSettings = (account: string, body: Partial<AccountLimits>) => this.request<AccountLimits>('PUT', `/live-settings/${account}`, body)

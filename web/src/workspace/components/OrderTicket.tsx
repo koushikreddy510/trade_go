@@ -140,7 +140,7 @@ export function OrderTicket() {
 
       {error && <p className="ticket-error" role="alert">{error}</p>}
 
-      <LiveOrders refreshKey={ordersKey} />
+      <LiveOrders refreshKey={ordersKey} symbol={quote?.is_index ? undefined : symbol} product={product || undefined} />
 
       {preview && (
         <div className="ticket-result" aria-label="Order preview">

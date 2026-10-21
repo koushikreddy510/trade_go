@@ -65,4 +65,21 @@ describe('OrderTicket', () => {
     expect(await screen.findByText('Cancel')).toBeInTheDocument()          // the new open order is listed with a cancel
     expect(app.api.placeOrder).toHaveBeenCalledWith(expect.objectContaining({ account: 'flattrade', symbol: 'NSE:SBIN-EQ', side: 'BUY', product: 'I' }))
   })
+
+  it('places a protective stop and moves an open stop (a trailing step) after confirmation', async () => {
+    const app = makeApp({}, { symbol: 'NSE:SBIN-EQ' })
+    const stop = { id: 's1', account: 'flattrade', symbol: 'NSE:SBIN-EQ', side: 'SELL', quantity: 1, units: 1, product: 'I', price: 940.3,
+      trigger_price: 945, status: 'open', broker_order_id: 'B9', filled_units: 0, avg_price: null, message: null, source: 'ticket', created_at: '2026-10-21T09:30:00Z' }
+    app.api.liveOrders.mockResolvedValue([stop])
+    window.confirm = () => true
+    renderIn(<OrderTicket />, app)
+    fireEvent.change(await screen.findByLabelText('Move stop s1'), { target: { value: '955' } })
+    fireEvent.click(screen.getByText('Move'))
+    await new Promise((r) => setTimeout(r, 0))
+    expect(app.api.moveStop).toHaveBeenCalledWith('s1', 955)
+    fireEvent.change(screen.getByLabelText('Stop trigger'), { target: { value: '950' } })
+    fireEvent.click(screen.getByText('Place stop'))
+    await new Promise((r) => setTimeout(r, 0))
+    expect(app.api.placeOrder).toHaveBeenCalledWith(expect.objectContaining({ side: 'SELL', price_type: 'SL', trigger_price: 950, product: 'I' }))
+  })
 })

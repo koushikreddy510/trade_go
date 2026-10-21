@@ -290,3 +290,6 @@ table.compare tr.median th, table.compare tr.median td { color:var(--muted); fon
 .badge.live-off { border:1px solid var(--line); color:var(--muted); border-radius:4px; padding:2px 8px; font-size:11px; font-weight:700; }
 .ticket-send { flex-basis:100%; }
 .workspace button.primary.live { background:var(--down); border-color:var(--down); color:#fff; }
+.stop-form, .move-stop { display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
+.stop-form input[type=number], .move-stop input { width:90px; }
+.order-actions { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
