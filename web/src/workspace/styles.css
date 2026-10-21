@@ -311,3 +311,4 @@ table.triggers-table th, table.triggers-table td { text-align:left; vertical-ali
 .trigger-rules { min-width:320px; }
 .trigger-rule { padding:2px 0 6px; border-bottom:1px dashed var(--line); }
 .trigger-rule:last-child { border-bottom:none; }
+.card-rules { padding:4px 0; }

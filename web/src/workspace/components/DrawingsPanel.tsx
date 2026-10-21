@@ -1,6 +1,7 @@
 import { draftFromLine } from '../lib/rules'
 import { fmtPrice } from '../lib/format'
 import { useApp, useSel } from './context'
+import { LineRules, useRuleWatch } from './LineRules'
 
 const NAMES = { trend_line: 'Trend line', ray: 'Ray', horizontal_line: 'Level', rectangle: 'Zone', text: 'Text' } as const
 
@@ -9,6 +10,7 @@ export function DrawingsPanel() {
   const drawings = useSel((s) => s.drawings)
   const selected = useSel((s) => s.selectedDrawingId)
   const timeframe = useSel((s) => s.timeframe)
+  const watch = useRuleWatch()
   return (
     <div className="panel" aria-label="Drawings">
       {drawings.length === 0 ? <p className="empty">Nothing drawn on this symbol. Pick “Trend line” or “Zone” in the toolbar and click two points on the chart.</p> : (
@@ -27,6 +29,7 @@ export function DrawingsPanel() {
                 onClick={(e) => e.stopPropagation()}
                 onBlur={(e) => { if (e.target.value !== d.label) void ctl.labelDrawing(d.id, e.target.value) }}
               />
+              {d.kind !== 'text' && <div className="card-rules" onClick={(e) => e.stopPropagation()}><LineRules drawing={d} drawings={drawings} watch={watch} /></div>}
               <div className="card-actions">
                 {d.kind !== 'text' && (
                   <>
