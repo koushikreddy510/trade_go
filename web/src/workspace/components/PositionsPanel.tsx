@@ -1,3 +1,4 @@
+import type { Position } from '../api/types'
 import { describeExit, describeTrail } from '../lib/rules'
 import { distanceToExit, livePnl, totalPnl } from '../lib/positions'
 import { fmtPnl, fmtPrice, shortSymbol, sign } from '../lib/format'
@@ -55,11 +56,11 @@ export function PositionsPanel() {
                 <tr key={p.id}>
                   <td>{shortSymbol(p.symbol)}</td>
                   <td className={p.side === 'BUY' ? 'up' : 'down'}>{p.side}</td>
-                  <td>{p.quantity}</td>
+                  <td>{p.quantity + (p.exit_qty_1 ?? 0)}</td>
                   <td>{fmtPrice(p.entry_price)}</td>
-                  <td>{fmtPrice(p.exit_price)}</td>
-                  <td>{p.exit_reason === 'exit_rule' ? 'exit rule' : p.exit_reason ?? '—'}</td>
-                  <td className={sign(p.realized_pnl)}>{fmtPnl(p.realized_pnl)}</td>
+                  <td>{p.exit_qty_1 ? <>{fmtPrice(p.exit_price_1)} / {fmtPrice(p.exit_price)}</> : fmtPrice(p.exit_price)}</td>
+                  <td>{p.exit_reason ? p.exit_reason.replace(/_/g, ' ') : '—'}</td>
+                  <td className={sign(closedResult(p))}>{fmtPnl(closedResult(p))}</td>
                   <td>{p.closed_at ? formatIst(p.closed_at, true) : '—'}</td>
                 </tr>
               ))}
@@ -69,4 +70,9 @@ export function PositionsPanel() {
       )}
     </div>
   )
+}
+
+/** A closed position's whole result: a 2-level exit's first half (exit_pnl_1) plus the rest. */
+function closedResult(p: Position): number | null {
+  return p.realized_pnl === null ? null : p.realized_pnl + (p.exit_pnl_1 ?? 0)
 }
