@@ -7,7 +7,7 @@ import { DEFAULT_THEME, type Theme } from '../lib/theme'
 export type Tool = 'cursor' | 'trend_line' | 'ray' | 'horizontal_line' | 'rectangle' | 'text'
 export type View = 'chart' | 'screener' | 'strategies' | 'results' | 'sectors' | 'backtests' | 'data'
 export type DockTab = 'positions' | 'orders' | 'watch' | 'ticket' | 'signals' | 'rules' | 'financials' | 'drawings' | 'triggers'
-export type IndicatorConfig = { id: string; name: IndicatorName; params: Record<string, number> }
+export type IndicatorConfig = { id: string; name: IndicatorName; params: Record<string, number>; hidden?: boolean }
 /** A finished backtest being shown on the chart. focus = unix time of the trade the chart should be centred on. */
 export type BacktestOverlay = { label: string; trades: BacktestTrade[]; open: BacktestOpen[]; focus: number | null }
 export type Toast = { id: number; kind: 'error' | 'info' | 'success'; text: string }
@@ -33,6 +33,8 @@ export type AppState = {
   showResults: boolean
   showPe: boolean
   tradeLines: TradeLineToggles
+  /** The indicator whose settings the toolbar's editor is open for (from the legend's ⚙), or null. */
+  editingIndicator: string | null
   btOverlay: BacktestOverlay | null
   theme: Theme
   connection: SocketState
@@ -71,6 +73,7 @@ export const initialState: AppState = {
   showResults: true,
   showPe: false,
   tradeLines: { stop: true, target: true, entry: true },
+  editingIndicator: null,
   btOverlay: null,
   theme: DEFAULT_THEME,
   connection: 'closed',

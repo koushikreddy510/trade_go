@@ -110,8 +110,11 @@ export function ChartPane() {
 
   const pe = useMemo(() => (showPe && financials?.symbol === symbol ? peOutput(candles, financials.eps_ttm) : null), [showPe, financials, symbol, candles])
   const outputs = useMemo(() => [...indicatorOutputs(indicators, candles), ...(pe ? [pe] : [])], [indicators, candles, pe, theme]) // theme: supertrend takes the up/down colours
-  const configKey = indicators.map((i) => i.id).join('|')
-  useEffect(() => { view.current?.setIndicators(outputs, configKey) }, [outputs, configKey])
+  // all are computed (colours stay put), only the visible ones are drawn; the legend lists every one
+  const hiddenIds = useMemo(() => new Set(indicators.filter((i) => i.hidden).map((i) => i.id)), [indicators])
+  const visible = useMemo(() => outputs.filter((o) => !hiddenIds.has(o.id)), [outputs, hiddenIds])
+  const configKey = indicators.filter((i) => !i.hidden).map((i) => i.id).join('|')
+  useEffect(() => { view.current?.setIndicators(visible, configKey) }, [visible, configKey])
   const legend = useMemo(() => legendAt(candles, outputs, hover), [candles, outputs, hover])
 
   useEffect(() => { view.current?.setDrawings(drawings, selected) }, [drawings, selected])
@@ -153,7 +156,7 @@ export function ChartPane() {
     <div className="chart-wrap" onClick={() => setResultPopup(null)}>
       <div ref={host} className="chart-host" data-testid="chart-host" />
       <BacktestBanner />
-      <ChartLegend symbol={symbol} timeframe={timeframe} legend={legend} />
+      <ChartLegend symbol={symbol} timeframe={timeframe} legend={legend} hidden={hiddenIds} />
       {loading && candles.length === 0 && <div className="chart-note">Loading candles…</div>}
       {!loading && candles.length === 0 && <div className="chart-note">No candles for {symbol} yet.</div>}
       {resultPopup && <ResultPopup popup={resultPopup} onClose={() => setResultPopup(null)} />}

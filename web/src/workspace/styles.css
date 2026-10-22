@@ -324,3 +324,11 @@ table.triggers-table th, table.triggers-table td { text-align:left; vertical-ali
 .quick-row { display:flex; flex-wrap:wrap; align-items:center; gap:4px 6px; margin:4px 0; }
 .screen-summary { margin:4px 0; font-size:12px; }
 .saved-screen button { font-size:12px; }
+
+/* legend: hide / settings / remove per indicator (TradingView style; buttons on hover) */
+.legend-ind .legend-actions { pointer-events:auto; display:inline-flex; gap:2px; opacity:0; transition:opacity .1s; }
+.legend-ind:hover .legend-actions, .legend-ind.off .legend-actions { opacity:1; }
+.legend-ind { pointer-events:auto; width:max-content; }
+.legend-actions button { background:var(--panel) !important; border:1px solid var(--line) !important; border-radius:3px; padding:0 5px !important; font-size:11px; line-height:16px; color:var(--text); }
+.legend-ind.off .muted { text-decoration:line-through; opacity:.6; }
+@media (hover: none) { .legend-ind .legend-actions { opacity:1; } }   /* phones: no hover, keep them visible */

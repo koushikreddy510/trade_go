@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { TIMEFRAMES, type IndicatorName } from '../api/types'
-import { INDICATORS, indicatorLabel } from '../lib/indicators'
+import { INDICATORS } from '../lib/indicators'
 import { fmtPct, fmtPrice, shortSymbol, sign } from '../lib/format'
 import { useApp, useSel } from './context'
 
-type EditingIndicator = { name: IndicatorName; params: Record<string, number> }
+type EditingIndicator = { name: IndicatorName; params: Record<string, number>; id?: string }   // id: editing an existing one
 
 export function ChartToolbar() {
   const { ctl } = useApp()
@@ -17,6 +17,13 @@ export function ChartToolbar() {
   const quote = useSel((s) => s.quotes[s.symbol])
   const [menu, setMenu] = useState(false)
   const [editing, setEditing] = useState<EditingIndicator | null>(null)
+  const editingId = useSel((s) => s.editingIndicator)
+  // the legend's ⚙ opens this editor for that indicator
+  useEffect(() => {
+    const cfg = editingId ? indicators.find((i) => i.id === editingId) : undefined
+    if (cfg) { setMenu(false); setEditing({ name: cfg.name, params: { ...cfg.params }, id: cfg.id }) }
+  }, [editingId, indicators])
+  const closeEditor = () => { setEditing(null); if (editingId) ctl.editIndicator(null) }
 
   function startEdit(name: IndicatorName) {
     setMenu(false)
@@ -25,8 +32,9 @@ export function ChartToolbar() {
 
   function confirmAdd() {
     if (!editing) return
-    ctl.addIndicator(editing.name, editing.params)
-    setEditing(null)
+    if (editing.id) ctl.updateIndicator(editing.id, editing.params)
+    else ctl.addIndicator(editing.name, editing.params)
+    closeEditor()
   }
 
   function updateParam(key: string, raw: string) {
@@ -66,13 +74,6 @@ export function ChartToolbar() {
         ))}
       </div>
       <div className="group indicators">
-        {indicators.map((i) => (
-          <span key={i.id} className="chip tag">
-            {indicatorLabel(i.name, i.params)}
-            <button aria-label={`Remove ${indicatorLabel(i.name, i.params)}`} onClick={() => ctl.removeIndicator(i.id)}>×</button>
-          </span>
-        ))}
-
         <span className="menu-anchor">
           <button className="chip" aria-haspopup="menu" aria-expanded={menu} onClick={() => { setEditing(null); setMenu((m) => !m) }}>+ Indicator</button>
 
@@ -90,7 +91,7 @@ export function ChartToolbar() {
           )}
 
           {editing && (
-            <div className="menu indicator-editor" role="dialog" aria-label={`Configure ${INDICATORS[editing.name].label}`}>
+            <div key={editing.id ?? editing.name} className="menu indicator-editor" role="dialog" aria-label={`Configure ${INDICATORS[editing.name].label}`}>
               <div className="indicator-editor-title">{INDICATORS[editing.name].label}</div>
               {Object.entries(editing.params).map(([key, val]) => (
                 <label key={key} className="indicator-editor-row">
@@ -105,8 +106,8 @@ export function ChartToolbar() {
                 </label>
               ))}
               <div className="indicator-editor-actions">
-                <button className="chip" onClick={() => setEditing(null)}>Cancel</button>
-                <button className="chip active" onClick={confirmAdd}>Add</button>
+                <button className="chip" onClick={closeEditor}>Cancel</button>
+                <button className="chip active" onClick={confirmAdd}>{editing.id ? 'Save' : 'Add'}</button>
               </div>
             </div>
           )}

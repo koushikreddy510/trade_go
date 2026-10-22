@@ -449,6 +449,26 @@ export class Controller {
     this.savePrefs()
   }
 
+  /** Hide or show an indicator without removing it (the legend keeps its row). */
+  toggleIndicatorHidden(id: string) {
+    this.store.set({ indicators: this.s.indicators.map((i) => (i.id === id ? { ...i, hidden: !i.hidden } : i)) })
+    this.savePrefs()
+  }
+
+  /** Open the toolbar's settings editor for an indicator (the legend's ⚙), or close it with null. */
+  editIndicator(id: string | null) { this.store.set({ editingIndicator: id }) }
+
+  /** New parameters for an existing indicator: it keeps its place (and colour) in the list. */
+  updateIndicator(id: string, params: Record<string, number>) {
+    const cfg = this.s.indicators.find((i) => i.id === id)
+    if (!cfg) return
+    const merged = { ...INDICATORS[cfg.name].defaults, ...params }
+    const newId = `${cfg.name}-${Object.values(merged).join('-')}`
+    if (newId !== id && this.s.indicators.some((i) => i.id === newId)) return
+    this.store.set({ indicators: this.s.indicators.map((i) => (i.id === id ? { ...i, id: newId, params: merged } : i)), editingIndicator: null })
+    this.savePrefs()
+  }
+
   toggleDockCollapsed() { this.store.set({ dockCollapsed: !this.s.dockCollapsed }) }
   toggleChartFull() { this.store.set({ chartFull: !this.s.chartFull }) }
 
