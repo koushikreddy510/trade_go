@@ -95,7 +95,10 @@ export class ChartView {
     } else {
       this.candles.setData(candles.map((c) => ({ time: t(c.time), open: c.open, high: c.high, low: c.low, close: c.close })))
       this.volume.setData(candles.map((c) => ({ time: t(c.time), value: c.volume, color: c.close >= c.open ? THEME.volumeUp : THEME.volumeDown })))
-      if (contextChanged || prev.length === 0) this.chart.timeScale().fitContent()
+      if (contextChanged || prev.length === 0) {
+        this.chart.timeScale().fitContent()
+        this.chart.priceScale('right').applyOptions({ autoScale: true })   // a dragged/zoomed price axis must not keep the last symbol's range
+      }
     }
     this.chart.applyOptions({ timeScale: { timeVisible: isIntraday(tf) } })
     this.primitive.set({ times: this.times, tf })

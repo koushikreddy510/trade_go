@@ -119,6 +119,7 @@ export function ChartPane() {
   useEffect(() => { view.current?.setPriceLines(positionLines(positions, symbol, quote)) }, [positions, symbol, quote])
   // stop / target / entry lines over each position's life, refetched when positions change (a trail moves the stop)
   const [lines, setLines] = useState<TradeLine[]>([])
+  useEffect(() => { setLines([]) }, [symbol])               // never draw the previous symbol's levels on this one
   useEffect(() => {
     let live = true
     api.tradeLines(symbol).then((l) => { if (live) setLines(l) }, () => { if (live) setLines([]) })
