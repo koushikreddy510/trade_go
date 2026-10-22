@@ -167,6 +167,12 @@ export type WatchRule = {
   plan?: WatchPlan; rule: Rule; live: number | null; session_open: boolean; last_candle: number | null; next_check: number | null; entry: WatchPart
   positions: (Position & { exits: WatchPart[]; live_link: { state: string; note: string | null; last_stop: number | null } | null })[]
 }
+/** A paper position's levels over its life (GET /trade-lines): the stop's every step, the target and the entry. */
+export type TradeLine = {
+  id: string; side: 'BUY' | 'SELL'; status: 'open' | 'closed'; entry_price: number; target: number | null
+  opened_at: number; closed_at: number | null; exit_price: number | null; stop_path: { time: number; stop: number }[]
+}
+export type TradeLineToggles = { stop: boolean; target: boolean; entry: boolean }
 export type AccountLimits = { live_enabled: boolean; max_order_value: number; max_orders_per_day: number; require_approval?: boolean; approval_minutes?: number }
 export type Approval = {
   id: string; position_id: string; rule_id: string | null; rule_name: string | null; account: string; product: string; symbol: string

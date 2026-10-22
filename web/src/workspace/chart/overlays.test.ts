@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import type { BacktestOpen, BacktestTrade, Drawing, Position, Quote, Signal } from '../api/types'
 import { candle, ist } from '../lib/testutil'
 import type { IndicatorConfig } from '../store/state'
-import { COLORS, backtestMarkers, backtestSegments, candleAt, drawingAnchors, exitMarkers, indicatorOutputs, indicatorSignature, positionLines, signalMarkers } from './overlays'
+import { COLORS, backtestMarkers, backtestSegments, candleAt, drawingAnchors, exitMarkers, indicatorOutputs, indicatorSignature, positionLines, signalMarkers, tradeLineSpecs } from './overlays'
 
 const SBIN = 'NSE:SBIN-EQ'
 const pos = (over: Partial<Position> = {}): Position => ({
@@ -255,5 +255,24 @@ describe('backtest trades on the chart', () => {
   it('links entry to exit, but not trades inside one candle or off the chart', () => {
     const segs = backtestSegments([trade(), trade({ exit_time: iso(11 * H) }), trade({ exit_time: iso(20 * H) })], candles, SBIN, '1H')
     expect(segs).toEqual([{ id: 'bt:0', from: { time: 10 * H, price: 100 }, to: { time: 12 * H, price: 110 }, color: COLORS.up }])
+  })
+})
+
+
+describe('trade lines', () => {
+  const pos = { id: 'p', side: 'SELL' as const, status: 'closed' as const, entry_price: 14429, target: 14242.27, opened_at: 1000, closed_at: 3000, exit_price: 14403,
+    stop_path: [{ time: 1000, stop: 14491.24 }, { time: 1600, stop: 14450 }, { time: 2400, stop: 14403 }] }
+
+  it('draws the stop as steps through every trail to the exit, plus target and entry, as the toggles say', () => {
+    const all = tradeLineSpecs([pos], { stop: true, target: true, entry: true }, 9999)
+    expect(all.map((s) => s.id)).toEqual(['p:stop', 'p:target', 'p:entry'])
+    expect(all[0]).toMatchObject({ step: true, points: [{ time: 1000, price: 14491.24 }, { time: 1600, price: 14450 }, { time: 2400, price: 14403 }, { time: 3000, price: 14403 }] })
+    expect(all[1].points).toEqual([{ time: 1000, price: 14242.27 }, { time: 3000, price: 14242.27 }])
+    expect(tradeLineSpecs([pos], { stop: false, target: true, entry: false }, 9999).map((s) => s.id)).toEqual(['p:target'])
+  })
+
+  it('runs an open position to now', () => {
+    const [stop] = tradeLineSpecs([{ ...pos, status: 'open', closed_at: null }], { stop: true, target: false, entry: false }, 5000)
+    expect(stop.points[stop.points.length - 1]).toEqual({ time: 5000, price: 14403 })
   })
 })

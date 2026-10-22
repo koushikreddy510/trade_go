@@ -2,7 +2,7 @@
 // chart instance, the series, the price lines, the markers and the mouse interactions
 // for drawing, selecting and dragging lines.
 import {
-  CandlestickSeries, ColorType, CrosshairMode, HistogramSeries, LineSeries, LineStyle, TickMarkType, createChart, createSeriesMarkers,
+  CandlestickSeries, ColorType, CrosshairMode, HistogramSeries, LineSeries, LineStyle, LineType, TickMarkType, createChart, createSeriesMarkers,
   type IChartApi, type IPriceLine, type ISeriesApi, type ISeriesMarkersPluginApi, type Logical, type MouseEventParams, type Time, type UTCTimestamp,
 } from 'lightweight-charts'
 import type { Candle, Drawing, DrawingKind, DrawingPoint, Timeframe } from '../api/types'
@@ -10,7 +10,7 @@ import { anchorIndex, indexToTime } from '../lib/lines'
 import { formatIst, formatIstDate, isIntraday, tfSeconds } from '../lib/timeframes'
 import type { Tool } from '../store/state'
 import { DrawingsPrimitive } from './DrawingsPrimitive'
-import { COLORS, THEME, indicatorSignature, type IndicatorOutput, type MarkerSpec, type PriceLineSpec, type SegmentSpec } from './overlays'
+import { COLORS, THEME, indicatorSignature, type IndicatorOutput, type MarkerSpec, type PriceLineSpec, type SegmentSpec, type TradeLineSpec } from './overlays'
 
 export type ChartCallbacks = {
   onDrawingComplete(kind: DrawingKind, points: DrawingPoint[]): void
@@ -35,6 +35,7 @@ export class ChartView {
   private priceLines = new Map<string, IPriceLine>()
   private overlaySeries: ISeriesApi<'Line' | 'Histogram'>[] = []
   private segments: ISeriesApi<'Line'>[] = []
+  private tradeLines: ISeriesApi<'Line'>[] = []
   private indicatorKey = ''
 
   private data: Candle[] = []
@@ -185,6 +186,27 @@ export class ChartView {
       const s = this.chart.addSeries(LineSeries, { color: spec.color, lineWidth: 1, lineStyle: LineStyle.Dashed, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false })
       s.setData([{ time: t(spec.from.time), value: spec.from.price }, { time: t(spec.to.time), value: spec.to.price }])
       return s
+    })
+  }
+
+  /** Positions' stop (stepped), target and entry over time. Each point snaps to the candle it falls in, because the
+   *  chart has one shared time axis and an off-candle time would add an empty bar. */
+  setTradeLines(specs: TradeLineSpec[]): void {
+    for (const s of this.tradeLines) this.chart.removeSeries(s)
+    const snap = (time: number) => {
+      let lo = 0, hi = this.times.length - 1, best = -1
+      while (lo <= hi) { const mid = (lo + hi) >> 1; if (this.times[mid] <= time) { best = mid; lo = mid + 1 } else hi = mid - 1 }
+      return best >= 0 ? this.times[best] : null
+    }
+    const styles = { solid: LineStyle.Solid, dashed: LineStyle.Dashed, dotted: LineStyle.Dotted }
+    this.tradeLines = specs.flatMap((spec) => {
+      const byTime = new Map<number, number>()
+      for (const p of spec.points) { const t0 = snap(p.time); if (t0 !== null) byTime.set(t0, p.price) }   // a later step on the same candle wins
+      if (byTime.size < 2 && spec.points.length >= 2) return []
+      const s = this.chart.addSeries(LineSeries, { color: spec.color, lineWidth: 2, lineStyle: styles[spec.style], lineType: spec.step ? LineType.WithSteps : LineType.Simple,
+        priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false })
+      s.setData([...byTime.entries()].sort((a, b) => a[0] - b[0]).map(([time, value]) => ({ time: t(time), value })))
+      return [s]
     })
   }
 

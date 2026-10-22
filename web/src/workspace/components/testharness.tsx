@@ -153,6 +153,7 @@ export function makeApp(over: Record<string, unknown> = {}, initial: Partial<App
     liveOrders: vi.fn(async () => [] as unknown[]),
     livePositions: vi.fn(async () => [] as unknown[]),
     rulesWatch: vi.fn(async () => [] as unknown[]),
+    tradeLines: vi.fn(async () => [] as unknown[]),
     allDrawings: vi.fn(async () => [] as unknown[]),
     approvals: vi.fn(async () => [] as unknown[]),
     decideApproval: vi.fn(async (id: string, approve: boolean) => ({ id, status: approve ? 'approved' : 'rejected' })),

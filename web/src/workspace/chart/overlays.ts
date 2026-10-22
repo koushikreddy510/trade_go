@@ -1,6 +1,6 @@
 // What gets drawn on top of the candles, as plain data. Keeping this separate from the
 // canvas code means "is my stop visible, and where?" can be tested without a browser.
-import type { BacktestOpen, BacktestTrade, Candle, Drawing, Position, Quote, Signal, Timeframe } from '../api/types'
+import type { BacktestOpen, BacktestTrade, Candle, Drawing, Position, Quote, Signal, Timeframe, TradeLine, TradeLineToggles } from '../api/types'
 import { INDICATORS, computeIndicator, indicatorLabel } from '../lib/indicators'
 import { anchorIndex } from '../lib/lines'
 import { fmtPnl, fmtPrice } from '../lib/format'
@@ -205,4 +205,25 @@ export function indicatorOutputs(configs: IndicatorConfig[], candles: Candle[]):
  *  also change when outputs first appear (candles arrive after the indicator list), not just when the list does. */
 export function indicatorSignature(outputs: IndicatorOutput[], configKey: string): string {
   return `${configKey}#${outputs.map((o) => `${o.id}:${o.pane}:${o.lines.map((l) => `${l.key}/${l.kind}`).join(',')}`).join(';')}`
+}
+
+
+/** One drawn level over time: a stop's steps, a target or an entry. Times are snapped to candles by the chart. */
+export type TradeLineSpec = { id: string; color: string; style: 'solid' | 'dashed' | 'dotted'; step: boolean; points: { time: number; price: number }[] }
+
+/** Stop (stepped, every trailing move), target and entry of each position, from open to exit (or to `now` while open). */
+export function tradeLineSpecs(positions: TradeLine[], show: TradeLineToggles, now: number): TradeLineSpec[] {
+  const out: TradeLineSpec[] = []
+  for (const p of positions) {
+    const end = p.closed_at ?? now
+    if (end <= p.opened_at) continue
+    if (show.stop && p.stop_path.length) {
+      const pts = p.stop_path.map((s) => ({ time: Math.max(s.time, p.opened_at), price: s.stop }))
+      pts.push({ time: end, price: pts[pts.length - 1].price })
+      out.push({ id: `${p.id}:stop`, color: COLORS.down, style: 'solid', step: true, points: pts })
+    }
+    if (show.target && p.target !== null) out.push({ id: `${p.id}:target`, color: COLORS.up, style: 'dashed', step: false, points: [{ time: p.opened_at, price: p.target }, { time: end, price: p.target }] })
+    if (show.entry) out.push({ id: `${p.id}:entry`, color: COLORS.entry, style: 'dotted', step: false, points: [{ time: p.opened_at, price: p.entry_price }, { time: end, price: p.entry_price }] })
+  }
+  return out
 }

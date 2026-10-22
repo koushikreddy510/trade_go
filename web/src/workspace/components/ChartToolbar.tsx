@@ -11,6 +11,7 @@ export function ChartToolbar() {
   const symbol = useSel((s) => s.symbol)
   const timeframe = useSel((s) => s.timeframe)
   const indicators = useSel((s) => s.indicators)
+  const tradeLines = useSel((s) => s.tradeLines)
   const showResults = useSel((s) => s.showResults)
   const showPe = useSel((s) => s.showPe)
   const quote = useSel((s) => s.quotes[s.symbol])
@@ -56,6 +57,14 @@ export function ChartToolbar() {
         <button className={showPe ? 'chip active' : 'chip'} aria-pressed={showPe} title="P/E (TTM) pane: price over trailing-year EPS as known at the time" onClick={() => ctl.togglePe()}>P/E</button>
       </div>
 
+      <div className="group trade-lines" role="group" aria-label="Trade lines">
+        <span className="muted">Trade lines</span>
+        {(['stop', 'target', 'entry'] as const).map((k) => (
+          <button key={k} className={tradeLines[k] ? 'chip active' : 'chip'} aria-pressed={tradeLines[k]}
+            title={{ stop: 'Stop-loss of each position, with every trailing move', target: 'Take-profit (target) of each position', entry: 'Entry price of each position' }[k]}
+            onClick={() => ctl.toggleTradeLine(k)}>{{ stop: 'Stop / trail', target: 'Target', entry: 'Entry' }[k]}</button>
+        ))}
+      </div>
       <div className="group indicators">
         {indicators.map((i) => (
           <span key={i.id} className="chip tag">

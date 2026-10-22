@@ -64,8 +64,8 @@ export class Controller {
 
   private savePrefs() {
     try {
-      const { symbol, timeframe, indicators, activeWatchlistId, dock, showResults, showPe, theme } = this.s
-      this.storage?.setItem(KEY, JSON.stringify({ symbol, timeframe, indicators, activeWatchlistId, dock, showResults, showPe, theme }))
+      const { symbol, timeframe, indicators, activeWatchlistId, dock, showResults, showPe, theme, tradeLines } = this.s
+      this.storage?.setItem(KEY, JSON.stringify({ symbol, timeframe, indicators, activeWatchlistId, dock, showResults, showPe, theme, tradeLines }))
     } catch {
       /* storage can be unavailable (private mode); preferences are a convenience only */
     }
@@ -97,6 +97,7 @@ export class Controller {
       ...(prefs.dock ? { dock: prefs.dock } : {}),
       ...(typeof prefs.showResults === 'boolean' ? { showResults: prefs.showResults } : {}),
       ...(typeof prefs.showPe === 'boolean' ? { showPe: prefs.showPe } : {}),
+      ...(prefs.tradeLines && typeof prefs.tradeLines === 'object' ? { tradeLines: { ...this.s.tradeLines, ...prefs.tradeLines } } : {}),
     })
     if (prefs.theme) this.setTheme(parseTheme(prefs.theme))
     const [watchlists, positions, signals, rules, server] = await Promise.all([
@@ -429,6 +430,12 @@ export class Controller {
   /** Result-day markers on the candles / the P/E (TTM) pane under them. */
   toggleResults() {
     this.store.set({ showResults: !this.s.showResults })
+    this.savePrefs()
+  }
+
+  /** Show or hide one kind of trade line (stop / target / entry) on the chart. */
+  toggleTradeLine(kind: keyof AppState['tradeLines']) {
+    this.store.set({ tradeLines: { ...this.s.tradeLines, [kind]: !this.s.tradeLines[kind] } })
     this.savePrefs()
   }
 

@@ -1,5 +1,5 @@
 import type {
-  BacktestOpen, BacktestTrade, Candle, Drawing, Financials, IndicatorName, Position, Quote, Rule, RuleDraft, ServerStatus, Signal, Timeframe, Watchlist,
+  BacktestOpen, BacktestTrade, Candle, Drawing, Financials, IndicatorName, Position, Quote, Rule, RuleDraft, ServerStatus, Signal, Timeframe, TradeLineToggles, Watchlist,
 } from '../api/types'
 import type { SocketState } from '../api/socket'
 import { DEFAULT_THEME, type Theme } from '../lib/theme'
@@ -32,6 +32,7 @@ export type AppState = {
   indicators: IndicatorConfig[]
   showResults: boolean
   showPe: boolean
+  tradeLines: TradeLineToggles
   btOverlay: BacktestOverlay | null
   theme: Theme
   connection: SocketState
@@ -69,6 +70,7 @@ export const initialState: AppState = {
   ],
   showResults: true,
   showPe: false,
+  tradeLines: { stop: true, target: true, entry: true },
   btOverlay: null,
   theme: DEFAULT_THEME,
   connection: 'closed',

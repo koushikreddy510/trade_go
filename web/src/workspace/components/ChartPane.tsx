@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { ChartView } from '../chart/ChartView'
 import { peOutput, resultMarkers } from '../chart/fundamentals'
 import { legendAt } from '../chart/legend'
-import { backtestMarkers, backtestSegments, exitMarkers, indicatorOutputs, positionLines, signalMarkers } from '../chart/overlays'
+import { backtestMarkers, backtestSegments, exitMarkers, indicatorOutputs, positionLines, signalMarkers, tradeLineSpecs } from '../chart/overlays'
+import type { TradeLine } from '../api/types'
 import type { FinancialEvent, FinancialRow } from '../api/types'
 import { fmtCrore, fmtPct, fmtPrice, sign } from '../lib/format'
 import { BacktestBanner } from './BacktestBanner'
@@ -54,7 +55,7 @@ function ResultPopup({ popup, onClose }: { popup: ResultPopupState; onClose: () 
 
 /** Hosts the lightweight-charts instance and keeps it in step with the store. */
 export function ChartPane() {
-  const { ctl } = useApp()
+  const { ctl, api } = useApp()
   const host = useRef<HTMLDivElement>(null)
   const view = useRef<ChartView | null>(null)
   const [hover, setHover] = useState<number | null>(null)
@@ -71,6 +72,7 @@ export function ChartPane() {
   const tool = useSel((s) => s.tool)
   const positions = useSel((s) => s.positions.open)
   const closed = useSel((s) => s.positions.closed)
+  const tradeLinesOn = useSel((s) => s.tradeLines)
   const bt = useSel((s) => s.btOverlay)
   const signals = useSel((s) => s.signals)
   const financials = useSel((s) => s.financials)
@@ -115,6 +117,17 @@ export function ChartPane() {
   useEffect(() => { view.current?.setDrawings(drawings, selected) }, [drawings, selected])
   useEffect(() => { view.current?.setTool(tool) }, [tool])
   useEffect(() => { view.current?.setPriceLines(positionLines(positions, symbol, quote)) }, [positions, symbol, quote])
+  // stop / target / entry lines over each position's life, refetched when positions change (a trail moves the stop)
+  const [lines, setLines] = useState<TradeLine[]>([])
+  useEffect(() => {
+    let live = true
+    api.tradeLines(symbol).then((l) => { if (live) setLines(l) }, () => { if (live) setLines([]) })
+    return () => { live = false }
+  }, [api, symbol, positions, closed])
+  useEffect(() => {
+    const now = candles.length ? candles[candles.length - 1].time : Math.floor(Date.now() / 1000)
+    view.current?.setTradeLines(tradeLineSpecs(lines, tradeLinesOn, now))
+  }, [lines, tradeLinesOn, candles])
   useEffect(() => { view.current?.setSegments(bt ? backtestSegments(bt.trades, candles, symbol, timeframe) : []) }, [bt, candles, symbol, timeframe])
   useEffect(() => { if (bt?.focus != null) view.current?.focus(bt.focus) }, [bt?.focus, candles])
   useEffect(() => {
