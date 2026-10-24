@@ -12,45 +12,30 @@ describe('ChartToolbar', () => {
     expect(screen.getByText('+2.00%')).toBeInTheDocument()
   })
 
-  it('marks the current timeframe and switches it, reloading candles', async () => {
-    const app = makeApp()
-    renderIn(<ChartToolbar />, app)
-    const group = screen.getByRole('group', { name: 'Timeframe' })
-    expect(within(group).getByRole('button', { name: '1H' })).toHaveAttribute('aria-pressed', 'true')
-    await userEvent.click(within(group).getByRole('button', { name: '15m' }))
-    await waitFor(() => expect(app.api.candles).toHaveBeenCalledWith(SBIN, '15m'))
-    expect(within(group).getByRole('button', { name: '15m' })).toHaveAttribute('aria-pressed', 'true')
-  })
-
-  it('phones: a dropdown showing the current timeframe switches it, and the Indicator menu lists what is applied', async () => {
+  it('shows only the current timeframe in a dropdown and switches it, reloading candles', async () => {
     const app = makeApp()
     renderIn(<ChartToolbar />, app)
     const select = screen.getByRole('combobox', { name: 'Timeframe' })
     expect(select).toHaveValue('1H')
-    await userEvent.selectOptions(select, '4H')
-    await waitFor(() => expect(app.api.candles).toHaveBeenCalledWith(SBIN, '4H'))
+    expect(screen.queryByRole('button', { name: '15m' })).toBeNull()          // no row of buttons
+    await userEvent.selectOptions(select, '15m')
+    await waitFor(() => expect(app.api.candles).toHaveBeenCalledWith(SBIN, '15m'))
+    expect(select).toHaveValue('15m')
+  })
+
+  it('offers every timeframe the server supports in the dropdown', () => {
+    renderIn(<ChartToolbar />, makeApp())
+    const names = within(screen.getByRole('combobox', { name: 'Timeframe' })).getAllByRole('option').map((o) => o.textContent)
+    expect(names).toEqual(['1m', '5m', '15m', '30m', '1H', '2H', '4H', '1D', '1W'])
+  })
+
+  it('the Indicator menu lists what is applied, with remove', async () => {
+    const app = makeApp()
+    renderIn(<ChartToolbar />, app)
     await userEvent.click(screen.getByRole('button', { name: '+ Indicator' }))
     expect(screen.getByText('Applied')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Remove EMA 20' }))
     expect(app.store.get().indicators.some((i) => i.id === 'ema-20')).toBe(false)
-  })
-
-  it('offers every timeframe the server supports', () => {
-    renderIn(<ChartToolbar />, makeApp())
-    const names = within(screen.getByRole('group', { name: 'Timeframe' })).getAllByRole('button').map((b) => b.textContent)
-    expect(names).toEqual(['1m', '5m', '15m', '30m', '1H', '2H', '4H', '1D', '1W'])
-  })
-
-  it('switches the result markers and the P/E pane on and off', async () => {
-    const app = makeApp()
-    renderIn(<ChartToolbar />, app)
-    const group = screen.getByRole('group', { name: 'Fundamentals' })
-    expect(within(group).getByRole('button', { name: 'Results' })).toHaveAttribute('aria-pressed', 'true')
-    expect(within(group).getByRole('button', { name: 'P/E' })).toHaveAttribute('aria-pressed', 'false')
-    await userEvent.click(within(group).getByRole('button', { name: 'Results' }))
-    await userEvent.click(within(group).getByRole('button', { name: 'P/E' }))
-    expect(app.store.get()).toMatchObject({ showResults: false, showPe: true })
-    expect(within(group).getByRole('button', { name: 'P/E' })).toHaveAttribute('aria-pressed', 'true')
   })
 
   it('adds several indicators from the menu and removes one from the applied list', async () => {

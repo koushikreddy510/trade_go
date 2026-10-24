@@ -55,16 +55,10 @@ export function ChartToolbar() {
         )}
       </div>
 
-      {/* phones: one dropdown showing the current timeframe instead of nine buttons */}
+      {/* one dropdown showing only the current timeframe; its list opens on click (TradingView style) */}
       <select className="tf-select" aria-label="Timeframe" value={timeframe} onChange={(e) => void ctl.setTimeframe(e.target.value as typeof timeframe)}>
         {TIMEFRAMES.map((tf) => <option key={tf} value={tf}>{tf}</option>)}
       </select>
-      <div className="group tf-buttons" role="group" aria-label="Timeframe">
-        {TIMEFRAMES.map((tf) => (
-          <button key={tf} className={tf === timeframe ? 'chip active' : 'chip'} aria-pressed={tf === timeframe} onClick={() => void ctl.setTimeframe(tf)}>{tf}</button>
-        ))}
-      </div>
-
       <div className="group extra" role="group" aria-label="Fundamentals">
         <button className={showResults ? 'chip active' : 'chip'} aria-pressed={showResults} title="Mark each result day on the chart" onClick={() => ctl.toggleResults()}>Results</button>
         <button className={showPe ? 'chip active' : 'chip'} aria-pressed={showPe} title="P/E (TTM) pane: price over trailing-year EPS as known at the time" onClick={() => ctl.togglePe()}>P/E</button>
