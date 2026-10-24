@@ -22,6 +22,19 @@ describe('ChartToolbar', () => {
     expect(within(group).getByRole('button', { name: '15m' })).toHaveAttribute('aria-pressed', 'true')
   })
 
+  it('phones: a dropdown showing the current timeframe switches it, and the Indicator menu lists what is applied', async () => {
+    const app = makeApp()
+    renderIn(<ChartToolbar />, app)
+    const select = screen.getByRole('combobox', { name: 'Timeframe' })
+    expect(select).toHaveValue('1H')
+    await userEvent.selectOptions(select, '4H')
+    await waitFor(() => expect(app.api.candles).toHaveBeenCalledWith(SBIN, '4H'))
+    await userEvent.click(screen.getByRole('button', { name: '+ Indicator' }))
+    expect(screen.getByText('Applied')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Remove EMA 20' }))
+    expect(app.store.get().indicators.some((i) => i.id === 'ema-20')).toBe(false)
+  })
+
   it('offers every timeframe the server supports', () => {
     renderIn(<ChartToolbar />, makeApp())
     const names = within(screen.getByRole('group', { name: 'Timeframe' })).getAllByRole('button').map((b) => b.textContent)
@@ -40,24 +53,28 @@ describe('ChartToolbar', () => {
     expect(within(group).getByRole('button', { name: 'P/E' })).toHaveAttribute('aria-pressed', 'true')
   })
 
-  it('adds several indicators from the menu and removes one', async () => {
+  it('adds several indicators from the menu and removes one from the applied list', async () => {
     const app = makeApp()
     renderIn(<ChartToolbar />, app)
-    expect(screen.getByText('EMA 20')).toBeInTheDocument() // the default
+    const defaults = app.store.get().indicators.map((x) => x.name)
     await userEvent.click(screen.getByRole('button', { name: '+ Indicator' }))
     await userEvent.click(screen.getByRole('menuitem', { name: /^RSI/ }))
+    await userEvent.click(screen.getByRole('button', { name: 'Add' }))                 // the parameter editor
     await userEvent.click(screen.getByRole('button', { name: '+ Indicator' }))
     await userEvent.click(screen.getByRole('menuitem', { name: /^Bollinger/ }))
-    expect(app.store.get().indicators.map((i) => i.name)).toEqual(['ema', 'rsi', 'bollinger'])
+    await userEvent.click(screen.getByRole('button', { name: 'Add' }))
+    expect(app.store.get().indicators.map((x) => x.name)).toEqual([...defaults, 'rsi', 'bollinger'])
+    await userEvent.click(screen.getByRole('button', { name: '+ Indicator' }))
     await userEvent.click(screen.getByRole('button', { name: 'Remove EMA 20' }))
-    expect(app.store.get().indicators.map((i) => i.name)).toEqual(['rsi', 'bollinger'])
+    expect(app.store.get().indicators.some((x) => x.id === 'ema-20')).toBe(false)
   })
 
   it('does not add the same indicator twice', async () => {
     const app = makeApp()
     renderIn(<ChartToolbar />, app)
+    const before = app.store.get().indicators.length
     await userEvent.click(screen.getByRole('button', { name: '+ Indicator' }))
-    await userEvent.click(screen.getByRole('menuitem', { name: /^EMA/ }))
-    expect(app.store.get().indicators).toHaveLength(1)
+    await userEvent.click(screen.getByRole('menuitem', { name: /^EMA/ }))   // the default EMA 20 is already there
+    expect(app.store.get().indicators).toHaveLength(before)
   })
 })

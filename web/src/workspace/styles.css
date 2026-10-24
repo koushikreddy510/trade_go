@@ -234,6 +234,12 @@ table.compare tr.median th, table.compare tr.median td { color:var(--muted); fon
 .broker-manual { display:inline-flex; flex-wrap:wrap; gap:6px; align-items:center; }
 .broker-manual input { width:260px; max-width:100%; }
 
+/* chart toolbar: desktop keeps the timeframe buttons; phones get a dropdown, a ⋯ for the rest, and a quiet legend */
+.chart-toolbar .tf-select, .chart-toolbar .more-btn { display:none; }
+.menu li.menu-head { cursor:default; font-size:11px; text-transform:uppercase; color:var(--muted); padding:6px 10px 2px; }
+.menu li.applied { display:flex; justify-content:space-between; align-items:center; gap:8px; cursor:default; }
+.menu li.applied .legend-actions { opacity:1; }
+
 /* ------------------------------------------------------------------ phones (Workspace.tsx PHONE_QUERY) */
 @media (max-width: 760px) {
   .workspace { font-size:14px; }
@@ -257,6 +263,14 @@ table.compare tr.median th, table.compare tr.median td { color:var(--muted); fon
   .main, .chart-area { min-width:0; max-width:100%; }
   .workspace { max-width:100vw; overflow-x:hidden; }
   .chart-toolbar .title { font-size:14px; }
+  .chart-toolbar { flex-wrap:nowrap; }
+  .chart-toolbar .tf-buttons { display:none; }
+  .chart-toolbar .tf-select, .chart-toolbar .more-btn { display:inline-block; }
+  .chart-toolbar .tf-select { padding:5px 8px; }
+  .chart-toolbar .extra { display:none; }
+  .chart-toolbar.more-open { flex-wrap:wrap; }
+  .chart-toolbar.more-open .extra { display:flex; flex-basis:100%; }
+  .legend-ind { display:none; }                        /* indicator values stay in the Indicator menu, the chart keeps its space */
   .chart-area { min-height:46vh; }
   .dock { height:auto; max-height:52vh; }
   .dock-tabs { overflow-x:auto; scrollbar-width:none; }

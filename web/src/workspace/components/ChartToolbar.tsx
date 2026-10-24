@@ -16,6 +16,7 @@ export function ChartToolbar() {
   const showPe = useSel((s) => s.showPe)
   const quote = useSel((s) => s.quotes[s.symbol])
   const [menu, setMenu] = useState(false)
+  const [more, setMore] = useState(false)     // phones: Results / P/E / trade lines live behind the ⋯ button
   const [editing, setEditing] = useState<EditingIndicator | null>(null)
   const editingId = useSel((s) => s.editingIndicator)
   // the legend's ⚙ opens this editor for that indicator
@@ -44,7 +45,7 @@ export function ChartToolbar() {
   }
 
   return (
-    <div className="chart-toolbar">
+    <div className={more ? 'chart-toolbar more-open' : 'chart-toolbar'}>
       <div className="title">
         <b>{shortSymbol(symbol)}</b>
         {quote && (
@@ -54,18 +55,22 @@ export function ChartToolbar() {
         )}
       </div>
 
-      <div className="group" role="group" aria-label="Timeframe">
+      {/* phones: one dropdown showing the current timeframe instead of nine buttons */}
+      <select className="tf-select" aria-label="Timeframe" value={timeframe} onChange={(e) => void ctl.setTimeframe(e.target.value as typeof timeframe)}>
+        {TIMEFRAMES.map((tf) => <option key={tf} value={tf}>{tf}</option>)}
+      </select>
+      <div className="group tf-buttons" role="group" aria-label="Timeframe">
         {TIMEFRAMES.map((tf) => (
           <button key={tf} className={tf === timeframe ? 'chip active' : 'chip'} aria-pressed={tf === timeframe} onClick={() => void ctl.setTimeframe(tf)}>{tf}</button>
         ))}
       </div>
 
-      <div className="group" role="group" aria-label="Fundamentals">
+      <div className="group extra" role="group" aria-label="Fundamentals">
         <button className={showResults ? 'chip active' : 'chip'} aria-pressed={showResults} title="Mark each result day on the chart" onClick={() => ctl.toggleResults()}>Results</button>
         <button className={showPe ? 'chip active' : 'chip'} aria-pressed={showPe} title="P/E (TTM) pane: price over trailing-year EPS as known at the time" onClick={() => ctl.togglePe()}>P/E</button>
       </div>
 
-      <div className="group trade-lines" role="group" aria-label="Trade lines">
+      <div className="group trade-lines extra" role="group" aria-label="Trade lines">
         <span className="muted">Trade lines</span>
         {(['stop', 'target', 'entry'] as const).map((k) => (
           <button key={k} className={tradeLines[k] ? 'chip active' : 'chip'} aria-pressed={tradeLines[k]}
@@ -73,12 +78,25 @@ export function ChartToolbar() {
             onClick={() => ctl.toggleTradeLine(k)}>{{ stop: 'Stop / trail', target: 'Target', entry: 'Entry' }[k]}</button>
         ))}
       </div>
+      <button className="chip more-btn" aria-label="More chart options" aria-expanded={more} onClick={() => setMore((m) => !m)}>⋯</button>
       <div className="group indicators">
         <span className="menu-anchor">
           <button className="chip" aria-haspopup="menu" aria-expanded={menu} onClick={() => { setEditing(null); setMenu((m) => !m) }}>+ Indicator</button>
 
           {menu && !editing && (
             <ul className="menu" role="menu">
+              {indicators.length > 0 && <li className="menu-head" role="presentation">Applied</li>}
+              {indicators.map((i) => (
+                <li key={`on-${i.id}`} className="applied" role="presentation">
+                  <span className={i.hidden ? 'muted' : ''}>{INDICATORS[i.name].label} <small>{Object.values(i.params).join(', ')}</small></span>
+                  <span className="legend-actions">
+                    <button aria-label={`${i.hidden ? 'Show' : 'Hide'} ${INDICATORS[i.name].label} ${Object.values(i.params).join(',')}`} onClick={() => ctl.toggleIndicatorHidden(i.id)}>{i.hidden ? '◌' : '👁'}</button>
+                    <button aria-label={`Settings of ${INDICATORS[i.name].label} ${Object.values(i.params).join(',')}`} onClick={() => ctl.editIndicator(i.id)}>⚙</button>
+                    <button aria-label={`Remove ${INDICATORS[i.name].label} ${Object.values(i.params).join(',')}`} onClick={() => ctl.removeIndicator(i.id)}>×</button>
+                  </span>
+                </li>
+              ))}
+              <li className="menu-head" role="presentation">Add</li>
               {(Object.keys(INDICATORS) as IndicatorName[]).map((name) => (
                 <li key={name} role="menuitem" tabIndex={0}
                   onClick={() => startEdit(name)}
