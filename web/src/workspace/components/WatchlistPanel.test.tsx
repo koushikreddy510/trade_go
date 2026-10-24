@@ -36,6 +36,33 @@ describe('WatchlistPanel', () => {
     expect(screen.getByText('TCS').closest('li')).not.toHaveClass('selected')
   })
 
+  it('Down and Up arrows move the chart to the next / previous symbol, and are left alone while typing', async () => {
+    const app = withLists()
+    renderIn(<WatchlistPanel />, app)
+    await userEvent.keyboard('{ArrowDown}')
+    await waitFor(() => expect(app.store.get().symbol).toBe(TCS))
+    await userEvent.keyboard('{ArrowDown}')                    // already last: stays
+    expect(app.store.get().symbol).toBe(TCS)
+    await userEvent.keyboard('{ArrowUp}')
+    await waitFor(() => expect(app.store.get().symbol).toBe(SBIN))
+    await userEvent.click(screen.getByPlaceholderText('Add symbol…'))
+    await userEvent.keyboard('{ArrowDown}')
+    expect(app.store.get().symbol).toBe(SBIN)
+  })
+
+  it('shows browsed screener results as an unsaved tab: arrows walk them, closing it brings the watchlist back', async () => {
+    const app = withLists()
+    renderIn(<WatchlistPanel />, app)
+    await app.ctl.openResults({ label: 'Golden crossover', symbols: ['NSE:AAA-EQ', 'NSE:BBB-EQ'], timeframe: '1D' }, 'NSE:AAA-EQ', [{ name: 'sma', params: { period: 50 } }])
+    expect(await screen.findByRole('tab', { name: 'Results: Golden crossover · 1D (2)' })).toBeInTheDocument()
+    expect(screen.queryByText('SBIN')).toBeNull()
+    expect(app.store.get().indicators.some((i) => i.id === 'sma-50')).toBe(true)
+    await userEvent.keyboard('{ArrowDown}')
+    await waitFor(() => expect(app.store.get().symbol).toBe('NSE:BBB-EQ'))
+    await userEvent.click(screen.getByRole('button', { name: 'Close results' }))
+    expect(await screen.findByText('SBIN')).toBeInTheDocument()
+  })
+
   it('opens a symbol’s chart when its row is clicked', async () => {
     const app = withLists()
     renderIn(<WatchlistPanel />, app)

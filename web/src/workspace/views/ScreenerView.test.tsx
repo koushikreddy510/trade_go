@@ -23,7 +23,7 @@ describe('ScreenerView', () => {
     renderIn(<ScreenerView />, makeApp({}, lists))
     const tcs = (await screen.findByText('TCS')).closest('tr')!
     expect(within(tcs).getByText('-1.00%')).toHaveClass('down')
-    expect(within(tcs).getByText('2.1×')).toBeInTheDocument()
+    expect(within(tcs).queryByText('2.1×')).toBeNull()                       // no technical value columns: they are why the stock is listed
   })
 
   it('runs another preset when its chip is clicked', async () => {
@@ -50,31 +50,44 @@ describe('ScreenerView', () => {
 
   it('keeps rows with a missing value at the bottom whichever way it sorts', async () => {
     const app = makeApp({
-      runPreset: async () => screenResult([screenRow('NSE:A-EQ', { rsi_14: null }), screenRow('NSE:B-EQ', { rsi_14: 20 }), screenRow('NSE:C-EQ', { rsi_14: 80 })]),
+      runPreset: async () => screenResult([screenRow('NSE:A-EQ', { close: null }), screenRow('NSE:B-EQ', { close: 20 }), screenRow('NSE:C-EQ', { close: 80 })]),
     }, lists)
     renderIn(<ScreenerView />, app)
     await screen.findByText('A')
-    await userEvent.click(screen.getByRole('columnheader', { name: /^RSI/ }))
+    await userEvent.click(screen.getByRole('columnheader', { name: /^Close/ }))
     expect(symbolsInOrder()).toEqual(['C', 'B', 'A'])
-    await userEvent.click(screen.getByRole('columnheader', { name: /^RSI/ }))
+    await userEvent.click(screen.getByRole('columnheader', { name: /^Close/ }))
     expect(symbolsInOrder()).toEqual(['B', 'C', 'A'])
   })
 
-  it('opens the chart for a result', async () => {
+  it('opens the chart of a result on the screen\'s timeframe, keeps the results as an unsaved list to step through', async () => {
     const app = makeApp({}, { ...lists, view: 'screener' })
     renderIn(<ScreenerView />, app)
     await userEvent.click(await screen.findByRole('button', { name: 'TCS' }))
-    await waitFor(() => expect(app.store.get()).toMatchObject({ symbol: TCS, view: 'chart' }))
+    await waitFor(() => expect(app.store.get()).toMatchObject({ symbol: TCS, view: 'chart', timeframe: '1D', browseActive: true }))
+    expect(app.store.get().browse?.symbols).toEqual(expect.arrayContaining([SBIN, TCS]))
+    expect(app.api.createWatchlist).not.toHaveBeenCalled()
   })
 
-  it('adds a result to the active watchlist, and shows when it is already there', async () => {
+  it('the + on a row offers every watchlist, marks the ones that have it, and adds to the one picked', async () => {
     const app = makeApp({}, lists)
     renderIn(<ScreenerView />, app)
     const sbin = (await screen.findByText('SBIN')).closest('tr')!
-    expect(within(sbin).getByRole('button', { name: 'In list' })).toBeDisabled()
+    await userEvent.click(within(sbin).getByRole('button', { name: 'Add SBIN to a watchlist' }))
+    expect(within(sbin).getByRole('menuitem', { name: /Core/ })).toBeDisabled()          // SBIN is already in Core
+    await userEvent.keyboard('{Escape}')
     const tcs = screen.getByText('TCS').closest('tr')!
-    await userEvent.click(within(tcs).getByRole('button', { name: '+ Core' }))
+    await userEvent.click(within(tcs).getByRole('button', { name: 'Add TCS to a watchlist' }))
+    await userEvent.click(within(tcs).getByRole('menuitem', { name: 'Core' }))
     await waitFor(() => expect(app.api.addToWatchlist).toHaveBeenCalledWith('w1', [TCS]))
+  })
+
+  it('has no Name column, and shows financial columns that the checkbox can hide', async () => {
+    const app = makeApp({}, lists)
+    renderIn(<ScreenerView />, app)
+    await screen.findByText('SBIN')
+    expect(screen.queryByRole('columnheader', { name: 'Name' })).toBeNull()
+    expect(screen.getByRole('checkbox', { name: /financial columns/ })).toBeChecked()
   })
 
   describe('custom screens', () => {
@@ -159,8 +172,8 @@ describe('ScreenerView', () => {
       ],
       columns: async () => ({
         columns: [
-          { name: 'pe_ratio', label: 'P/E', unit: 'x', short: 'P/E' }, { name: 'roce_pct', label: 'ROCE, %', unit: 'pct', short: 'ROCE %' },
-          { name: 'q_growth_streak', label: 'streak', unit: 'int', short: 'Growth streak' }, { name: 'close', label: 'Last close', unit: 'price', short: 'Close' },
+          { name: 'pe_ratio', label: 'P/E', unit: 'x', short: 'P/E', technical: false }, { name: 'roce_pct', label: 'ROCE, %', unit: 'pct', short: 'ROCE %', technical: false },
+          { name: 'q_growth_streak', label: 'streak', unit: 'int', short: 'Growth streak', technical: false }, { name: 'close', label: 'Last close', unit: 'price', short: 'Close' },
         ],
         operators: ['>', '<'],
       }),
@@ -190,7 +203,7 @@ describe('ScreenerView', () => {
       renderIn(<ScreenerView />, app)
       await screen.findByText('SBIN')
       await userEvent.click(screen.getByRole('button', { name: 'Save as watchlist' }))
-      await waitFor(() => expect(app.api.createWatchlist).toHaveBeenCalledWith('uptrend 2026-10-16', [SBIN, TCS]))
+      await waitFor(() => expect(app.api.createWatchlist).toHaveBeenCalledWith('uptrend · 1D 2026-10-16', [SBIN, TCS]))
     })
   })
 })

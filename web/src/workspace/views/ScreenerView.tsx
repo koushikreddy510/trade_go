@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { Preset, QuickCondition, SavedScreen, ScreenColumn, ScreenFilter, ScreenResult, ScreenRow } from '../api/types'
+import type { IndicatorName, Preset, QuickCondition, SavedScreen, ScreenColumn, ScreenFilter, ScreenResult, ScreenRow } from '../api/types'
 import { fmtCrore, fmtPct, fmtPrice, shortSymbol, sign } from '../lib/format'
 import { useApp, useSel } from '../components/context'
 
@@ -13,16 +13,29 @@ const FALLBACK: Record<string, { unit: string; short: string }> = {
   close: { unit: 'price', short: 'Close' }, change_pct: { unit: 'pct2', short: 'Chg %' }, volume_ratio: { unit: 'mult', short: 'Vol ×avg' }, rsi_14: { unit: 'int', short: 'RSI' },
   ret_20d: { unit: 'pct', short: '20d %' }, ret_60d: { unit: 'pct', short: '60d %' }, pct_from_52w_high: { unit: 'pct', short: 'vs 52w high' }, market_cap: { unit: 'cr', short: 'Mkt cap (Cr)' },
 }
-const DEFAULT_SHOW = ['close', 'change_pct', 'volume_ratio', 'rsi_14', 'ret_20d', 'ret_60d', 'pct_from_52w_high', 'market_cap']
+const BASIC_SHOW = ['close', 'change_pct', 'market_cap']
+/** What explains each screen on a chart: added to the chart's indicators when its results are opened. */
+const PRESET_INDICATORS: Record<string, { name: IndicatorName; params?: Record<string, number> }[]> = {
+  golden_cross: [{ name: 'sma', params: { period: 50 } }, { name: 'sma', params: { period: 200 } }],
+  death_cross: [{ name: 'sma', params: { period: 50 } }, { name: 'sma', params: { period: 200 } }],
+  supertrend_up: [{ name: 'supertrend', params: { period: 10, multiplier: 3 } }, { name: 'supertrend', params: { period: 5, multiplier: 2 } }],
+  uptrend: [{ name: 'ema', params: { period: 20 } }, { name: 'sma', params: { period: 50 } }, { name: 'sma', params: { period: 200 } }],
+  oversold: [{ name: 'rsi' }],
+}
+const SCREEN_TIMEFRAME = '1D' as const    // the daily scan reads 1D candles
 /** Percentages that are levels (a margin, a return on capital), not changes: no red/green. */
-const LEVELS = new Set(['roce_pct', 'roe_pct', 'dividend_yield', 'earnings_yield_pct', 'q_opm_pct'])
+const LEVELS = new Set(['roce_pct', 'roe_pct', 'dividend_yield', 'earnings_yield_pct', 'q_opm_pct', 'q_npm_pct'])
+/** Results and valuation columns shown after the technical ones, so a screen can be judged on both at a glance. */
+const FINANCIAL_SHOW = ['pe_ratio', 'q_revenue', 'q_net_profit', 'q_revenue_qoq_pct', 'q_revenue_yoy_pct', 'q_profit_qoq_pct', 'q_profit_yoy_pct', 'q_opm_pct', 'q_npm_pct']
 const GROUP_ORDER = ['Price and volume', 'Value and quality', 'Quarterly results']
 
 const blankFilter = (): ScreenFilter => ({ field: 'rsi_14', op: '<=', value: 30 })
 
 export function ScreenerView() {
   const { api, ctl } = useApp()
-  const activeList = useSel((s) => s.watchlists.find((w) => w.id === s.activeWatchlistId))
+  const lists = useSel((s) => s.watchlists)
+  const [menuFor, setMenuFor] = useState<string | null>(null)
+  const [withFinancials, setWithFinancials] = useState(true)
   const [presets, setPresets] = useState<Preset[]>([])
   const [columns, setColumns] = useState<ScreenColumn[]>([])
   const [operators, setOperators] = useState<string[]>(['>', '>=', '<', '<=', '=', '!='])
@@ -63,28 +76,13 @@ export function ScreenerView() {
     return () => { live = false }
   }, [api])
 
-  const autoSaveWatchlist = async (preset: string | 'custom', matchedRows: ScreenRow[]) => {
-    if (matchedRows.length === 0) return
-    const now = new Date()
-    const stamp = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })
-    const label = preset === 'custom' ? 'Custom screen' : (presets.find((p) => p.name === preset)?.label ?? preset)
-    const name = `${label} · ${now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} ${stamp}`
-    await ctl.createWatchlist(name, matchedRows.slice(0, 200).map((r) => r.symbol))
-  }
-
   const scan = async () => {
     setBusy("Scanning every symbol's daily candles… this can take a minute")
     setError(null)
     try {
       const out = await api.runScan()
       ctl.notify('success', `Scan done: ${out.stored} symbols analysed${out.skipped ? `, ${out.skipped} skipped (too little history)` : ''}.`)
-      const scanResult = active === 'custom' ? await api.runScreen(filters, sort.field, sort.descending) : await api.runPreset(active)
-      setResult(scanResult)
-      // Auto-save scan results as a new named watchlist
-      if (scanResult.rows.length > 0) {
-        await autoSaveWatchlist(active, scanResult.rows)
-        ctl.notify('success', `Saved ${scanResult.rows.length} results as a new watchlist.`)
-      }
+      setResult(active === 'custom' ? await api.runScreen(filters, sort.field, sort.descending) : await api.runPreset(active))
     } catch (e) { setError(e instanceof Error ? e.message : String(e)) } finally { setBusy(null) }
   }
 
@@ -131,17 +129,23 @@ export function ScreenerView() {
   ))
   const toggleSort = (field: string) => setSort((s) => (s.field === field ? { field, descending: !s.descending } : { field, descending: true }))
   const patchFilter = (i: number, patch: Partial<ScreenFilter>) => setFilters((fs) => fs.map((f, j) => (j === i ? { ...f, ...patch } : f)))
-  const inList = (symbol: string) => activeList?.symbols.includes(symbol) ?? false
   const current = presets.find((p) => p.name === active)
   const unitOf = (key: string) => columns.find((c) => c.name === key)?.unit ?? FALLBACK[key]?.unit ?? 'num'
   const shortOf = (key: string) => columns.find((c) => c.name === key)?.short ?? FALLBACK[key]?.short ?? key
-  // A preset says which columns suit it; a custom screen shows the usual ones plus whatever it filters on.
-  const shown = active === 'custom'
-    ? [...new Set([...DEFAULT_SHOW.slice(0, 5), ...filters.map((f) => f.field), ...filters.flatMap((f) => (typeof f.value === 'number' ? [] : [f.value.field])), 'market_cap'])]
-    : current?.show ?? DEFAULT_SHOW
+  // Technical values (RSI, volume, returns…) are why a stock is listed, so they are not repeated as columns; what is
+  // shown is the price, the market cap and the financials to compare the matches by.
+  const isFundamental = (k: string) => columns.find((c) => c.name === k)?.technical === false
+  const wanted = active === 'custom'
+    ? [...filters.map((f) => f.field), ...filters.flatMap((f) => (typeof f.value === 'number' ? [] : [f.value.field]))]
+    : current?.show ?? []
+  const shown = [...new Set([...BASIC_SHOW, ...wanted.filter(isFundamental), ...(withFinancials ? FINANCIAL_SHOW.filter((k) => columns.some((c) => c.name === k)) : [])])]
   const groups = [...new Set(presets.map((p) => p.group ?? 'Screens'))].sort((a, b) => (GROUP_ORDER.indexOf(a) + 1 || 99) - (GROUP_ORDER.indexOf(b) + 1 || 99))
+  const openChart = (symbol: string) => {
+    const label = active === 'custom' ? 'Custom screen' : current?.label ?? 'Screen'
+    return ctl.openResults({ label, symbols: rows.map((r) => r.symbol), timeframe: SCREEN_TIMEFRAME }, symbol, PRESET_INDICATORS[active] ?? [])
+  }
   const saveAsList = async () => {
-    const name = `${active === 'custom' ? 'Custom screen' : current?.label ?? 'Screen'} ${result?.run_date ?? ''}`.trim()
+    const name = `${active === 'custom' ? 'Custom screen' : current?.label ?? 'Screen'} · 1D ${result?.run_date ?? ''}`.trim()
     const wl = await ctl.createWatchlist(name, rows.slice(0, 200).map((r) => r.symbol))
     if (wl) ctl.notify('success', `Saved ${wl.symbols.length} stocks as the watchlist “${wl.name}”.`)
   }
@@ -221,12 +225,12 @@ export function ScreenerView() {
 
       {rows.length > 0 && (
         <div className="table-wrap">
-          <p className="muted">{result?.count} match{result?.count === 1 ? '' : 'es'}{result && result.count > rows.length ? `, showing ${rows.length}` : ''} <button className="small" onClick={() => void saveAsList()}>Save as watchlist</button></p>
+          <p className="muted">{result?.count} match{result?.count === 1 ? '' : 'es'}{result && result.count > rows.length ? `, showing ${rows.length}` : ''} <button className="small" onClick={() => void saveAsList()}>Save as watchlist</button>{' '}
+            <label className="muted"><input type="checkbox" checked={withFinancials} onChange={(e) => setWithFinancials(e.target.checked)} /> financial columns</label></p>
           <table className="grid screener-table">
             <thead>
               <tr>
                 <th onClick={() => toggleSort('symbol')} className="sortable">Symbol{sort.field === 'symbol' ? (sort.descending ? ' ▼' : ' ▲') : ''}</th>
-                <th>Name</th>
                 {shown.map((k) => <th key={k} className="sortable" onClick={() => toggleSort(k)}>{shortOf(k)}{sort.field === k ? (sort.descending ? ' ▼' : ' ▲') : ''}</th>)}
                 <th />
               </tr>
@@ -234,17 +238,22 @@ export function ScreenerView() {
             <tbody>
               {rows.map((r: ScreenRow) => (
                 <tr key={r.symbol}>
-                  <td><button className="link" onClick={() => void ctl.selectSymbol(r.symbol)} title="Open chart">{shortSymbol(r.symbol)}</button></td>
-                  <td className="muted">{r.name ?? ''}</td>
+                  <td><button className="link" onClick={() => void openChart(r.symbol)} title="Open the chart; ↑ / ↓ step through these results">{shortSymbol(r.symbol)}</button></td>
                   {shown.map((k) => {
                     const v = r[k] as number | null | undefined
                     const unit = unitOf(k)
                     return <td key={k} className={unit.startsWith('pct') && !LEVELS.has(k) ? sign(v ?? 0) : ''}>{v === null || v === undefined ? '—' : (FORMAT[unit] ?? FORMAT.num)(v)}</td>
                   })}
-                  <td>
-                    <button className="small" disabled={!activeList || inList(r.symbol)} onClick={() => void ctl.addToWatchlist(r.symbol)}>
-                      {inList(r.symbol) ? 'In list' : `+ ${activeList?.name ?? 'watchlist'}`}
-                    </button>
+                  <td className="add-cell">
+                    <button className="small" aria-label={`Add ${shortSymbol(r.symbol)} to a watchlist`} aria-expanded={menuFor === r.symbol} onClick={() => setMenuFor(menuFor === r.symbol ? null : r.symbol)}>+</button>
+                    {menuFor === r.symbol && (
+                      <ul className="add-menu" role="menu" aria-label={`Watchlists for ${shortSymbol(r.symbol)}`}>
+                        {lists.map((w) => {
+                          const has = w.symbols.includes(r.symbol)
+                          return <li key={w.id}><button role="menuitem" disabled={has} onClick={() => { void ctl.addToWatchlist(r.symbol, w.id); setMenuFor(null) }}>{w.name}{has ? ' ✓' : ''}</button></li>
+                        })}
+                      </ul>
+                    )}
                   </td>
                 </tr>
               ))}

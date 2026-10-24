@@ -10,6 +10,8 @@ export type DockTab = 'positions' | 'orders' | 'watch' | 'ticket' | 'signals' | 
 export type IndicatorConfig = { id: string; name: IndicatorName; params: Record<string, number>; hidden?: boolean }
 /** A finished backtest being shown on the chart. focus = unix time of the trade the chart should be centred on. */
 export type BacktestOverlay = { label: string; trades: BacktestTrade[]; open: BacktestOpen[]; focus: number | null }
+/** Screener results being walked on the chart: not saved anywhere, gone when closed. */
+export type Browse = { label: string; symbols: string[]; timeframe: Timeframe }
 export type Toast = { id: number; kind: 'error' | 'info' | 'success'; text: string }
 
 export type AppState = {
@@ -21,6 +23,9 @@ export type AppState = {
   quotes: Record<string, Quote>
   watchlists: Watchlist[]
   activeWatchlistId: string | null
+  browse: Browse | null
+  /** The watchlist panel shows `browse` instead of the active watchlist. */
+  browseActive: boolean
   drawings: Drawing[]
   selectedDrawingId: string | null
   tool: Tool
@@ -57,6 +62,8 @@ export const initialState: AppState = {
   quotes: {},
   watchlists: [],
   activeWatchlistId: null,
+  browse: null,
+  browseActive: false,
   drawings: [],
   selectedDrawingId: null,
   tool: 'cursor',

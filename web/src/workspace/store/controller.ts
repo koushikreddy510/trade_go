@@ -10,7 +10,7 @@ import { parseTheme, type Theme } from '../lib/theme'
 import { applyClosedBar, applyTick } from '../lib/candles'
 import { fmtPnl, fmtPrice, shortSymbol } from '../lib/format'
 import type { Store } from './store'
-import type { AppState, DockTab, IndicatorConfig, Tool, View } from './state'
+import type { AppState, Browse, DockTab, IndicatorConfig, Tool, View } from './state'
 
 type StorageLike = Pick<Storage, 'getItem' | 'setItem'>
 type Api = Pick<
@@ -84,6 +84,7 @@ export class Controller {
   syncSubscriptions() {
     const wanted = new Set<string>([this.s.symbol])
     this.s.watchlists.forEach((w) => w.symbols.forEach((x) => wanted.add(x)))
+    if (this.s.browseActive) this.s.browse?.symbols.forEach((x) => wanted.add(x))
     this.s.positions.open.forEach((p) => wanted.add(p.symbol))
     this.socket.setSymbols(wanted)
   }
@@ -154,6 +155,21 @@ export class Controller {
     this.savePrefs()
     this.syncSubscriptions()
     await this.loadChart()
+  }
+
+  /** Walk a screener's results on the chart (Up / Down in the list), on the timeframe the screen ran on, with the
+   * indicators that explain the screen added. Nothing is saved; closeResults() puts the watchlist back. */
+  async openResults(browse: Browse, symbol: string, indicators: { name: IndicatorName; params?: Record<string, number> }[] = []) {
+    indicators.forEach((i) => this.addIndicator(i.name, i.params))
+    this.store.set({ browse, browseActive: true, view: 'chart', timeframe: browse.timeframe, symbol, candles: [], financials: null })
+    this.savePrefs()
+    this.syncSubscriptions()
+    await this.loadChart()
+  }
+
+  closeResults() {
+    this.store.set({ browse: null, browseActive: false })
+    this.syncSubscriptions()
   }
 
   setTheme(theme: Theme) {
@@ -287,7 +303,7 @@ export class Controller {
 
   // --------------------------------------------------------------- watchlists
   setActiveWatchlist(id: string) {
-    this.store.set({ activeWatchlistId: id })
+    this.store.set({ activeWatchlistId: id, browseActive: false })
     this.savePrefs()
   }
 

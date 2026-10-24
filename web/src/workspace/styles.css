@@ -332,3 +332,11 @@ table.triggers-table th, table.triggers-table td { text-align:left; vertical-ali
 .legend-actions button { background:var(--panel) !important; border:1px solid var(--line) !important; border-radius:3px; padding:0 5px !important; font-size:11px; line-height:16px; color:var(--text); }
 .legend-ind.off .muted { text-decoration:line-through; opacity:.6; }
 @media (hover: none) { .legend-ind .legend-actions { opacity:1; } }   /* phones: no hover, keep them visible */
+
+/* the "+" next to a screener row: a small list of watchlists to add the symbol to */
+.add-cell { position: relative; text-align: right; }
+.add-menu { position: absolute; right: 0; top: 100%; z-index: 20; margin: 2px 0 0; padding: 4px; list-style: none; min-width: 200px; max-height: 260px; overflow: auto;
+  background: var(--panel, #181818); border: 1px solid var(--border, #333); border-radius: 6px; box-shadow: 0 6px 18px rgba(0,0,0,.5); text-align: left; }
+.add-menu button { width: 100%; text-align: left; background: none; border: 0; padding: 5px 8px; color: inherit; cursor: pointer; }
+.add-menu button:hover:not(:disabled) { background: rgba(127,127,127,.2); }
+.add-menu button:disabled { opacity: .5; cursor: default; }
