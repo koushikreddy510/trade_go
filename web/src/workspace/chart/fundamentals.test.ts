@@ -14,7 +14,7 @@ const daily = [3, 4, 5, 6, 7, 10].map((d) => candle(ist(2026, 8, d, 9, 15), 100,
 describe('result markers', () => {
   it('sits on the daily candle of the result day', () => {
     const [m] = resultMarkers([event('2026-08-05')], daily, '1D')
-    expect(m).toMatchObject({ id: 'result:2026-08-05', time: ist(2026, 8, 5, 9, 15), position: 'aboveBar', shape: 'square' })
+    expect(m).toMatchObject({ id: 'result:2026-08-05', time: ist(2026, 8, 5, 9, 15), position: 'belowBar', shape: 'circle' })
   })
 
   it('on an intraday chart it is the last candle of the day, because results land after the bell', () => {
@@ -54,9 +54,9 @@ describe('result markers', () => {
     expect(colors).toEqual([COLORS.up, COLORS.down, COLORS.neutral])
   })
 
-  it('says what happened: profit growth and the price reaction', () => {
-    expect(resultMarkers([event('2026-08-05', { profit_growth_pct: 42, reaction_pct: -3.14 })], daily, '1D')[0].text).toBe('Result PAT +42% · -3.1%')
-    expect(resultMarkers([event('2026-08-05', { profit_growth_pct: null })], daily, '1D')[0].text).toBe('Result')
+  it('is a small E under the candle; the numbers live in the Financials panel', () => {
+    expect(resultMarkers([event('2026-08-05', { profit_growth_pct: 42, reaction_pct: -3.14 })], daily, '1D')[0].text).toBe('E')
+    expect(resultMarkers([event('2026-08-05', { profit_growth_pct: null })], daily, '1D')[0].text).toBe('E')
   })
 
   it('comes back in time order, as the chart library requires', () => {

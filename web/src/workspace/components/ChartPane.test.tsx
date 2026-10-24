@@ -12,11 +12,11 @@ const h = vi.hoisted(() => ({ instances: [] as unknown[] }))
 type Fake = {
   cb: ChartCallbacks
   setCandles: ReturnType<typeof vi.fn>; setIndicators: ReturnType<typeof vi.fn>; setPriceLines: ReturnType<typeof vi.fn>
-  setMarkers: ReturnType<typeof vi.fn>; setSegments: ReturnType<typeof vi.fn>; focus: ReturnType<typeof vi.fn>; setTheme: ReturnType<typeof vi.fn>; setDrawings: ReturnType<typeof vi.fn>; setTool: ReturnType<typeof vi.fn>; destroy: ReturnType<typeof vi.fn>
+  setMarkers: ReturnType<typeof vi.fn>; setSegments: ReturnType<typeof vi.fn>; setTradeLines: ReturnType<typeof vi.fn>; focus: ReturnType<typeof vi.fn>; setTheme: ReturnType<typeof vi.fn>; setDrawings: ReturnType<typeof vi.fn>; setTool: ReturnType<typeof vi.fn>; destroy: ReturnType<typeof vi.fn>
 }
 vi.mock('../chart/ChartView', () => ({
   ChartView: class {
-    setCandles = vi.fn(); setIndicators = vi.fn(); setPriceLines = vi.fn(); setMarkers = vi.fn(); setDrawings = vi.fn(); setTool = vi.fn(); setSegments = vi.fn(); focus = vi.fn(); setTheme = vi.fn(); destroy = vi.fn()
+    setCandles = vi.fn(); setIndicators = vi.fn(); setPriceLines = vi.fn(); setMarkers = vi.fn(); setDrawings = vi.fn(); setTool = vi.fn(); setSegments = vi.fn(); setTradeLines = vi.fn(); setResultMarkers = vi.fn(); focus = vi.fn(); setTheme = vi.fn(); destroy = vi.fn()
     constructor(_host: HTMLElement, public cb: ChartCallbacks) { h.instances.push(this) }
   },
 }))
@@ -95,18 +95,19 @@ describe('ChartPane', () => {
 
     it('marks the result day on the candles', () => {
       renderIn(<ChartPane />, makeApp({}, { candles, timeframe: '1D', financials: results() }))
-      expect(last(chart().setMarkers)[0]).toMatchObject([{ id: 'result:2026-10-20', shape: 'square', text: 'Result PAT +25%' }])
+      expect(last(chart().setResultMarkers)[0]).toMatchObject([{ id: 'result:2026-10-20', shape: 'circle', text: 'E' }])
     })
 
-    it('keeps result squares and signal arrows together, in time order', () => {
+    it('puts result markers on the volume pane and signal arrows on the candles', () => {
       const app = makeApp({}, { candles, timeframe: '1D', financials: results(), signals: [signal({ timeframe: '1D', bar_time: T0 })] })
       renderIn(<ChartPane />, app)
-      expect(last(chart().setMarkers)[0].map((m: { shape: string }) => m.shape)).toEqual(['arrowUp', 'square'])
+      expect(last(chart().setMarkers)[0].map((m: { shape: string }) => m.shape)).toEqual(['arrowUp'])
+      expect(last(chart().setResultMarkers)[0].map((m: { shape: string }) => m.shape)).toEqual(['circle'])
     })
 
     it('hides the markers when switched off', () => {
       renderIn(<ChartPane />, makeApp({}, { candles, timeframe: '1D', financials: results(), showResults: false }))
-      expect(last(chart().setMarkers)[0]).toEqual([])
+      expect(last(chart().setResultMarkers)[0]).toEqual([])
     })
 
     it('never shows another symbol’s results while a new symbol loads', () => {
@@ -115,7 +116,7 @@ describe('ChartPane', () => {
     })
 
     it('adds a P/E pane only when switched on', () => {
-      const app = makeApp({}, { candles, timeframe: '1D', financials: results() })
+      const app = makeApp({}, { candles, timeframe: '1D', financials: results(), indicators: [{ id: 'ema-20', name: 'ema', params: { period: 20 } }] })
       renderIn(<ChartPane />, app)
       expect(last(chart().setIndicators)[0].map((o: { id: string }) => o.id)).toEqual(['ema-20'])
       act(() => app.ctl.togglePe())
@@ -196,7 +197,7 @@ describe('ChartPane', () => {
   describe('indicators', () => {
     it('computes indicator lines from the candles and passes them over', () => {
       const candles = Array.from({ length: 30 }, (_, i) => ({ time: T0 + i * 3600, open: 100 + i, high: 101 + i, low: 99 + i, close: 100 + i, volume: 10 }))
-      const app = makeApp({}, { candles })
+      const app = makeApp({}, { candles, indicators: [{ id: 'ema-20', name: 'ema', params: { period: 20 } }] })
       renderIn(<ChartPane />, app)
       const [outputs, key] = last(chart().setIndicators)
       expect(key).toBe('ema-20')
@@ -205,7 +206,7 @@ describe('ChartPane', () => {
     })
 
     it('rebuilds with a new key when an indicator is added', () => {
-      const app = makeApp()
+      const app = makeApp({}, { indicators: [{ id: 'ema-20', name: 'ema', params: { period: 20 } }] })
       renderIn(<ChartPane />, app)
       act(() => app.ctl.addIndicator('rsi'))
       expect(last(chart().setIndicators)[1]).toBe('ema-20|rsi-14')

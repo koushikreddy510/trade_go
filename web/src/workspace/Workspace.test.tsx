@@ -8,7 +8,7 @@ import { SBIN, TCS, financials, makeApp, position, quote, signal } from './compo
 const h = vi.hoisted(() => ({ charts: [] as { setPriceLines: ReturnType<typeof vi.fn>; setCandles: ReturnType<typeof vi.fn> }[] }))
 vi.mock('./chart/ChartView', () => ({
   ChartView: class {
-    setCandles = vi.fn(); setIndicators = vi.fn(); setPriceLines = vi.fn(); setMarkers = vi.fn(); setDrawings = vi.fn(); setTool = vi.fn(); setSegments = vi.fn(); focus = vi.fn(); setTheme = vi.fn(); destroy = vi.fn()
+    setCandles = vi.fn(); setIndicators = vi.fn(); setPriceLines = vi.fn(); setMarkers = vi.fn(); setDrawings = vi.fn(); setTool = vi.fn(); setSegments = vi.fn(); setTradeLines = vi.fn(); setResultMarkers = vi.fn(); focus = vi.fn(); setTheme = vi.fn(); destroy = vi.fn()
     constructor() { h.charts.push(this) }
   },
 }))

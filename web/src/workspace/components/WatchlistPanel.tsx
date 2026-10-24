@@ -70,7 +70,7 @@ export function WatchlistPanel({ collapsed, onToggle }: { collapsed?: boolean; o
           </span>
         )}
         {lists.map((w) => (
-          <button key={w.id} role="tab" aria-selected={w.id === active?.id} className={w.id === active?.id ? 'tab active' : 'tab'} onClick={() => ctl.setActiveWatchlist(w.id)}>{w.name}</button>
+          <button key={w.id} role="tab" aria-selected={w.id === active?.id} title={w.name} className={w.id === active?.id ? 'tab active' : 'tab'} onClick={() => ctl.setActiveWatchlist(w.id)}>{w.name}</button>
         ))}
         <button className="tab add" title="New watchlist" aria-label="New watchlist" onClick={newList}>+</button>
         <button className="wl-collapse-btn" title="Collapse watchlist" onClick={onToggle}>◀</button>

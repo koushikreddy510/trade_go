@@ -86,7 +86,7 @@ describe('starting up', () => {
     b.storage.set(...(Array.from(a.storage.entries())[0] as [string, string]))
     await b.ctl.boot()
     expect(b.store.get()).toMatchObject({ symbol: TCS, timeframe: '15m' })
-    expect(b.store.get().indicators.map((i) => i.name)).toEqual(['ema', 'rsi'])
+    expect(b.store.get().indicators.map((i) => i.name)).toEqual(['ema', 'supertrend', 'supertrend', 'rsi'])
   })
 
   it('remembers the chosen theme, and starts black on a first visit', async () => {
@@ -482,8 +482,8 @@ describe('indicators', () => {
     await t.ctl.boot()
     t.ctl.addIndicator('bollinger')
     t.ctl.addIndicator('bollinger')
-    expect(t.store.get().indicators.map((i) => i.id)).toEqual(['ema-20', 'bollinger-20-2'])
+    expect(t.store.get().indicators.map((i) => i.id)).toEqual(['ema-20', 'supertrend-10-3', 'supertrend-5-2', 'bollinger-20-2'])   // the three defaults, then the new one
     t.ctl.removeIndicator('ema-20')
-    expect(t.store.get().indicators.map((i) => i.name)).toEqual(['bollinger'])
+    expect(t.store.get().indicators.map((i) => i.name)).toEqual(['supertrend', 'supertrend', 'bollinger'])
   })
 })

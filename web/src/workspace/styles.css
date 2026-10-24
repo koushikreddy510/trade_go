@@ -39,6 +39,7 @@ html, body, #root { margin:0; padding:0; height:100%; overflow:hidden; backgroun
 .wl-collapse-btn { background:none !important; border:none !important; color:var(--muted); cursor:pointer; font-size:10px; padding:4px 6px; flex:none; }
 .wl-collapse-btn:hover { color:var(--text) !important; }
 .wl-collapsed .wl-collapse-btn { padding:10px 6px; width:100%; text-align:center; }
+.wl-tabs .tab { max-width:9.5em; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding:5px 8px; font-size:12px; }   /* long list names never fill the panel */
 .wl-tabs { display:flex; flex-wrap:wrap; align-items:center; padding:4px 4px 0; border-bottom:1px solid var(--line); }
 .search { position:relative; padding:6px; }
 .search input { width:100%; }
